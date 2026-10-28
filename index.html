@@ -1,0 +1,500 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Quét Serial Thùng</title>
+<meta name="description" content="Quét mã QR thùng bằng camera, tách serial theo cột Thùng 1, Thùng 2… và xuất Excel.">
+<meta name="theme-color" content="#17191c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Quét Thùng">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+:root{
+  --bg:#f3f2ee; --paper:#ffffff; --ink:#17191c; --muted:#62666d; --line:#d9d7d0;
+  --accent:#e8a31a; --accent-ink:#1b1400; --accent-soft:#fbefd2;
+  --ok:#1d7a46; --ok-ink:#ffffff; --ok-soft:#e1f2e8; --warn:#b4471b; --warn-soft:#fbe6dc;
+  --sel:#17191c; --sel-ink:#ffffff; --cam:#0d0e10;
+  --f-ui:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+  --f-mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#141518; --paper:#1d1f23; --ink:#ecebe6; --muted:#9a9ea6; --line:#33363c;
+  --accent:#f0b030; --accent-ink:#1b1400; --accent-soft:#3a2f14;
+  --ok:#5cc58a; --ok-ink:#0c1a12; --ok-soft:#173225; --warn:#f08a5d; --warn-soft:#3b2219;
+  --sel:#ecebe6; --sel-ink:#141518; color-scheme:dark }}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font-size:15px;line-height:1.45;
+  padding-top:max(12px,env(safe-area-inset-top,0px));
+  padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));
+  padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+h1{font-size:20px;font-weight:800;margin:0;letter-spacing:-.01em}
+.stats{display:flex;gap:6px}
+.stat{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px 10px;text-align:right;min-width:64px}
+.stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums;line-height:1.15}
+.stat span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+
+.cam{position:relative;background:var(--cam);border-radius:14px;overflow:hidden;aspect-ratio:4/3;max-height:46vh;width:100%}
+.cam video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam .frame{position:absolute;left:50%;top:50%;width:72%;aspect-ratio:1;max-height:86%;transform:translate(-50%,-50%);border-radius:12px;
+  box-shadow:0 0 0 2000px rgba(0,0,0,.35);border:3px solid rgba(255,255,255,.85);transition:border-color .15s}
+.cam.hit .frame{border-color:#3ddc84}
+.cam.dup .frame{border-color:#ff8a50}
+.cam .idle{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;color:#e9e9e6;text-align:center;padding:16px}
+.cam .idle p{margin:0;font-size:14px;opacity:.85;max-width:30ch}
+.cam .badge{position:absolute;left:10px;top:10px;background:rgba(0,0,0,.55);color:#fff;font-size:12px;padding:3px 8px;border-radius:20px;font-weight:600}
+.cam .badge i{display:inline-block;width:8px;height:8px;border-radius:50%;background:#ff4d4d;margin-right:6px;animation:pulse 1.2s infinite}
+
+button,.btn{font:inherit;cursor:pointer;border-radius:10px;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:10px 12px;font-weight:600;
+  display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:46px;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+button:active{transform:scale(.98)}
+button:focus-visible,label.btn:focus-within,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:17px;font-weight:800;min-height:54px}
+.stop{background:var(--sel);border-color:var(--sel);color:var(--sel-ink)}
+label.btn{position:relative}
+.btn input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+svg.i{width:20px;height:20px;flex:none}
+.controls{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.controls .wide{grid-column:1/-1}
+
+.rule{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
+.rule b{color:var(--ink);font-weight:600}
+.tag{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:5px;background:var(--accent-soft);color:var(--ink)}
+
+.status{border-radius:10px;padding:10px 12px;font-size:14px;display:flex;gap:10px;align-items:flex-start;min-height:44px;background:var(--paper);border:1px solid var(--line)}
+.status.ok{background:var(--ok-soft);border-color:transparent} .status.warn{background:var(--warn-soft);border-color:transparent}
+.status .dot{width:10px;height:10px;border-radius:50%;background:var(--muted);margin-top:6px;flex:none}
+.status.ok .dot{background:var(--ok)} .status.warn .dot{background:var(--warn)}
+.status.busy .dot{background:var(--accent);animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.status.busy .dot,.cam .badge i{animation:none}}
+.status .msg{min-width:0;overflow-wrap:anywhere}
+.warnlist{font-family:var(--f-mono);font-size:12px;margin:4px 0 0;padding-left:18px}
+
+details.manual{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:8px 12px}
+details.manual summary{cursor:pointer;font-size:14px;font-weight:600;color:var(--muted);padding:4px 0}
+.manualbox{display:flex;flex-direction:column;gap:8px;margin:8px 0 4px}
+textarea{font-family:var(--f-mono);font-size:16px;width:100%;min-height:84px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:10px;resize:vertical}
+.hint{font-size:12.5px;color:var(--muted);margin:0}
+.manualbtns{display:flex;gap:8px;flex-wrap:wrap}
+
+.gridhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.gridhead h2{font-size:15px;margin:0;font-weight:700}
+.gridwrap{overflow-x:auto;background:var(--paper);border:1px solid var(--line);border-radius:14px;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:0;white-space:nowrap}
+td.stt,th.stt{position:sticky;left:0;background:var(--paper);color:var(--muted);font-size:12px;text-align:center;min-width:34px;padding:6px 4px;z-index:1}
+th.box{vertical-align:top;background:var(--paper)}
+.boxhead{display:flex;flex-direction:column;gap:2px;padding:8px 10px;min-width:150px;border:0;border-radius:0;background:transparent;min-height:0;font-weight:700;width:100%;align-items:flex-start;color:var(--ink)}
+.boxhead .n{font-size:15px}
+.boxhead .c{font-size:11.5px;color:var(--muted);font-weight:500}
+th.box.cur .boxhead{background:var(--sel);color:var(--sel-ink)}
+th.box.cur .boxhead .c{color:inherit;opacity:.8}
+.boxtools{display:flex;border-top:1px solid var(--line)}
+.boxtools button{flex:1;min-height:32px;padding:4px 6px;font-size:12px;border:0;border-radius:0;font-weight:600;color:var(--muted);background:transparent}
+.boxtools button.arm{background:var(--warn);color:#fff}
+td.sn{font-family:var(--f-mono);font-size:13px}
+td.sn.fresh{background:var(--ok-soft)}
+td.sn button{all:unset;display:block;padding:6px 10px;cursor:pointer;width:100%;box-sizing:border-box}
+td.sn button.arm{background:var(--warn-soft);color:var(--warn);text-decoration:line-through}
+.empty{padding:26px 16px;text-align:center;color:var(--muted);white-space:normal}
+
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:5;background:var(--paper);border-top:1px solid var(--line);
+  padding:10px max(14px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(14px,env(safe-area-inset-left,0px))}
+.bar .in{max-width:860px;margin:0 auto;display:grid;grid-template-columns:1.3fr 1fr .8fr;gap:8px}
+.bar .xl{background:var(--ok);border-color:var(--ok);color:var(--ok-ink)}
+.bar .clear.arm{background:var(--warn);border-color:var(--warn);color:#fff}
+.install{font-size:13px;background:var(--accent-soft);border-radius:10px;padding:10px 12px}
+.install b{font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Quét Serial Thùng</h1>
+    <div class="stats">
+      <div class="stat"><b id="stBoxes">0</b><span>Thùng</span></div>
+      <div class="stat"><b id="stSerials">0</b><span>Serial</span></div>
+    </div>
+  </header>
+
+  <div class="install" id="installTip" hidden>Để dùng như app: bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm vào MH chính</b>.</div>
+
+  <div class="cam" id="cam">
+    <video id="video" playsinline muted autoplay></video>
+    <div class="frame" id="frame" hidden></div>
+    <div class="badge" id="liveBadge" hidden><i></i>Đang quét</div>
+    <div class="idle" id="idle">
+      <svg class="i" style="width:44px;height:44px" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2"/><path d="M7 8v8M10 8v8M13 8v8M17 8v8"/></svg>
+      <p>Bấm <b>Bắt đầu quét</b>, đưa mã vào giữa khung. Đọc được là tự ghi vào bảng.</p>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="primary wide" id="scanBtn" type="button">Bắt đầu quét</button>
+    <label class="btn">
+      <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/><circle cx="12" cy="13" r="3"/></svg>
+      Chụp ảnh nét
+      <input id="photoInput" type="file" accept="image/*" capture="environment">
+    </label>
+    <label class="btn">
+      <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/></svg>
+      Chọn ảnh
+      <input id="galInput" type="file" accept="image/*" multiple>
+    </label>
+  </div>
+
+  <div class="rule">
+    <span><span class="tag">QR</span> <b>tạo thùng mới</b>, tách serial xuống cột</span>
+    <span><span class="tag">Mã vạch</span> <b>thêm 1 serial</b> vào thùng đang chọn</span>
+  </div>
+
+  <div class="status" id="status" role="status" aria-live="polite"><span class="dot"></span><div class="msg" id="statusMsg">Sẵn sàng.</div></div>
+
+  <details class="manual">
+    <summary>Nhập tay / máy quét cầm tay / dán nội dung QR</summary>
+    <div class="manualbox">
+      <textarea id="manualText" placeholder="Mỗi serial một dòng…" spellcheck="false" autocapitalize="characters" autocomplete="off"></textarea>
+      <p class="hint">Nhiều dòng = 1 thùng mới. Một dòng = thêm vào thùng đang chọn. Máy quét Bluetooth: chạm vào ô rồi quét.</p>
+      <div class="manualbtns">
+        <button id="addBoxBtn" type="button">Tạo thùng mới</button>
+        <button id="addOneBtn" type="button">Thêm vào thùng đang chọn</button>
+        <button id="emptyBoxBtn" type="button">Thêm thùng trống</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="gridhead">
+    <h2>Bảng serial</h2>
+    <span class="hint">Chạm tên thùng để chọn · chạm serial 2 lần để xoá</span>
+  </div>
+  <div class="gridwrap"><table id="grid"></table></div>
+</div>
+
+<div class="bar"><div class="in">
+  <button class="xl" id="xlBtn" type="button">
+    <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+    Xuất Excel</button>
+  <button id="copyBtn" type="button">Sao chép</button>
+  <button class="clear" id="clearBtn" type="button">Xoá hết</button>
+</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
+<script>
+(function(){
+"use strict";
+const KEY="quet-serial-thung-v1";
+const $=id=>document.getElementById(id);
+
+// ---------- state ----------
+let state=load();
+function load(){
+  try{const s=JSON.parse(localStorage.getItem(KEY)||"null");if(s&&Array.isArray(s.boxes)&&!s.sample)return s;}catch(e){}
+  return {boxes:[],cur:-1};
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}}
+function allSerials(){const m=new Map();state.boxes.forEach((b,i)=>b.serials.forEach(s=>m.set(s.v,i)));return m;}
+function now(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `${p(d.getDate())}/${p(d.getMonth()+1)}/${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+// Tách nội dung QR thành danh sách serial: theo ký tự ngăn cách, nếu không có thì cắt đều theo tiền tố chung.
+function splitSerials(text){
+  const t=String(text).replace(/[\u0000-\u0008\u000e-\u001f]/g,"\n");
+  let parts=t.split(/[\r\n\t,;|]+|\s+/).map(s=>s.trim()).filter(Boolean);
+  if(parts.length===1){
+    const s=parts[0];
+    for(let L=6;L<=s.length/2;L++){
+      if(s.length%L)continue;
+      const ch=[];for(let i=0;i<s.length;i+=L)ch.push(s.slice(i,i+L));
+      if(ch.every(c=>c.slice(0,3)===ch[0].slice(0,3))){parts=ch;break;}
+    }
+  }
+  return parts;
+}
+
+// ---------- feedback ----------
+let actx=null;
+function beep(ok){
+  try{
+    actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();o.connect(g);g.connect(actx.destination);
+    o.frequency.value=ok?1760:440;g.gain.value=.12;o.start();o.stop(actx.currentTime+(ok?.09:.25));
+  }catch(e){}
+  try{navigator.vibrate&&navigator.vibrate(ok?40:[80,60,80]);}catch(e){}
+  const c=$("cam");c.classList.remove("hit","dup");void c.offsetWidth;c.classList.add(ok?"hit":"dup");setTimeout(()=>c.classList.remove("hit","dup"),600);
+}
+function setStatus(kind,html,isHtml){$("status").className="status "+(kind||"");if(isHtml)$("statusMsg").innerHTML=html;else $("statusMsg").textContent=html;}
+
+// ---------- add data ----------
+let lastAdded=new Set();
+function addBox(serials,qrText,source){
+  const seen=allSerials(),dups=[],fresh=[],t=now(),local=new Set();
+  serials.forEach(v=>{if(seen.has(v)||local.has(v))dups.push(v);else{local.add(v);fresh.push({v,t});}});
+  if(!fresh.length){setStatus("warn",`Mã này đã quét rồi (trùng với Thùng ${seen.get(dups[0])+1}). Không tạo thùng mới.`);beep(false);return false;}
+  state.boxes.push({qr:qrText||"",serials:fresh});
+  state.cur=state.boxes.length-1;lastAdded=new Set(fresh.map(s=>s.v));
+  save();render();scrollToCur();
+  let msg=`<b>Thùng ${state.cur+1}</b>: ${fresh.length} serial${source?" · "+esc(source):""}.`;
+  if(dups.length)msg+=` Bỏ qua ${dups.length} serial trùng:<ul class="warnlist">${dups.map(d=>`<li>${esc(d)}${seen.has(d)?` (Thùng ${seen.get(d)+1})`:""}</li>`).join("")}</ul>`;
+  setStatus(dups.length?"warn":"ok",msg,true);beep(!dups.length);return true;
+}
+function addOne(v,source){
+  if(state.cur<0||!state.boxes[state.cur]){state.boxes.push({qr:"",serials:[]});state.cur=state.boxes.length-1;}
+  const seen=allSerials();
+  if(seen.has(v)){setStatus("warn",`Serial <b>${esc(v)}</b> đã có ở Thùng ${seen.get(v)+1}. Bỏ qua.`,true);beep(false);return false;}
+  state.boxes[state.cur].serials.push({v,t:now()});lastAdded=new Set([v]);
+  save();render();scrollToCur();
+  setStatus("ok",`+1 serial <b>${esc(v)}</b> → Thùng ${state.cur+1}${source?" · "+esc(source):""}.`,true);beep(true);return true;
+}
+function handleResult(r,source){
+  const parts=splitSerials(r.text);
+  if(!parts.length)return;
+  if(r.qr||parts.length>1)addBox(parts,r.text,(r.qr?"QR":"mã vạch")+(source?" · "+source:""));
+  else addOne(parts[0],"mã vạch"+(source?" · "+source:""));
+}
+
+// ---------- table ----------
+let armed=null;
+function render(){
+  const total=state.boxes.reduce((a,b)=>a+b.serials.length,0);
+  $("stBoxes").textContent=state.boxes.length;$("stSerials").textContent=total;
+  const g=$("grid");
+  if(!state.boxes.length){g.innerHTML=`<tbody><tr><td class="empty">Chưa có thùng nào. Bấm <b>Bắt đầu quét</b> và đưa mã QR trên thùng vào khung.</td></tr></tbody>`;return;}
+  const rows=Math.max(...state.boxes.map(b=>b.serials.length),1);
+  let h=`<thead><tr><th class="stt">STT</th>`;
+  state.boxes.forEach((b,i)=>{
+    const cur=i===state.cur,a=armed==="b"+i;
+    h+=`<th class="box${cur?" cur":""}"><button class="boxhead" data-sel="${i}" type="button"><span class="n">Thùng ${i+1}</span><span class="c">${b.serials.length} serial${cur?" · đang chọn":""}</span></button>`+
+       `<div class="boxtools"><button type="button" data-delbox="${i}" class="${a?"arm":""}">${a?"Chạm lần nữa để xoá":"Xoá thùng"}</button></div></th>`;
+  });
+  h+=`</tr></thead><tbody>`;
+  for(let r=0;r<rows;r++){
+    h+=`<tr><td class="stt">${r+1}</td>`;
+    state.boxes.forEach((b,i)=>{
+      const s=b.serials[r];
+      if(!s){h+=`<td class="sn"></td>`;return;}
+      const k=`s${i}_${r}`;
+      h+=`<td class="sn${lastAdded.has(s.v)?" fresh":""}"><button type="button" data-delsn="${i}_${r}" class="${armed===k?"arm":""}">${esc(s.v)}</button></td>`;
+    });
+    h+=`</tr>`;
+  }
+  g.innerHTML=h+`</tbody>`;
+}
+function scrollToCur(){const th=document.querySelector("th.box.cur");if(th)th.scrollIntoView({block:"nearest",inline:"nearest"});}
+$("grid").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.sel!==undefined){state.cur=+b.dataset.sel;armed=null;save();render();setStatus("",`Đã chọn Thùng ${state.cur+1}. Mã vạch lẻ sẽ thêm vào thùng này.`);return;}
+  if(b.dataset.delbox!==undefined){const i=+b.dataset.delbox;
+    if(armed==="b"+i){state.boxes.splice(i,1);if(state.cur>=state.boxes.length)state.cur=state.boxes.length-1;armed=null;save();render();setStatus("","Đã xoá thùng. Các thùng sau được đánh số lại.");}
+    else{armed="b"+i;render();}return;}
+  if(b.dataset.delsn!==undefined){const [i,r]=b.dataset.delsn.split("_").map(Number),k=`s${i}_${r}`;
+    if(armed===k){const v=state.boxes[i].serials[r].v;state.boxes[i].serials.splice(r,1);armed=null;save();render();setStatus("",`Đã xoá serial ${v} khỏi Thùng ${i+1}.`);}
+    else{armed=k;render();}return;}
+});
+
+// ---------- decoding helpers ----------
+const ONE_D=()=>[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.CODE_93,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.CODABAR];
+const tick=()=>new Promise(r=>setTimeout(r,0));
+const cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
+// Lấy một vùng (tỉ lệ) của ảnh/video, thu nhỏ về cạnh dài tw, có thể lật gương.
+function grab(src,W,H,fx,fy,fw,fh,tw,mirror){
+  const sx=W*fx,sy=H*fy,sw=W*fw,sh=H*fh;
+  const s=Math.min(1,tw/Math.max(sw,sh)),w=Math.max(1,Math.round(sw*s)),h=Math.max(1,Math.round(sh*s));
+  cv.width=w;cv.height=h;cx.setTransform(1,0,0,1,0,0);
+  if(mirror){cx.translate(w,0);cx.scale(-1,1);}
+  cx.drawImage(src,sx,sy,sw,sh,0,0,w,h);
+  return cx.getImageData(0,0,w,h);
+}
+function toGray(d){const o=new Uint8ClampedArray(d.width*d.height),a=d.data;for(let i=0,j=0;i<o.length;i++,j+=4)o[i]=(a[j]*77+a[j+1]*150+a[j+2]*29)>>8;return o;}
+function rot90(l,w,h){const o=new Uint8ClampedArray(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++)o[x*h+(h-1-y)]=l[y*w+x];return o;}
+function zx(gray,w,h,formats,opts){
+  const hints=new Map();hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,formats);if(opts.hard)hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
+  const r=new ZXing.MultiFormatReader();r.setHints(hints);
+  const views=opts.rotate?[[gray,w,h],[rot90(gray,w,h),h,w]]:[[gray,w,h]];
+  const bins=opts.hard?[ZXing.HybridBinarizer,ZXing.GlobalHistogramBinarizer]:[ZXing.HybridBinarizer];
+  for(const [L,W,H] of views)for(const B of bins){
+    try{const res=r.decodeWithState(new ZXing.BinaryBitmap(new B(new ZXing.RGBLuminanceSource(L,W,H))));
+      return {text:res.getText(),qr:res.getBarcodeFormat()===ZXing.BarcodeFormat.QR_CODE};}catch(e){}
+  }
+  return null;
+}
+function qr(d){const r=jsQR(d.data,d.width,d.height,{inversionAttempts:"dontInvert"});return r&&r.data?{text:r.data,qr:true}:null;}
+
+// ---------- live camera ----------
+let stream=null,scanning=false,frameNo=0,lastText="",lastSeen=0,timer=null;
+const video=$("video");
+let detector=null;
+if("BarcodeDetector" in window){try{detector=new BarcodeDetector({formats:["qr_code","code_128","code_39","code_93","ean_13","ean_8","upc_a","itf","codabar"]});}catch(e){detector=null;}}
+
+async function startScan(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus("warn","Trình duyệt này không mở được camera trực tiếp. Dùng nút Chụp ảnh nét.");return;}
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}}});
+  }catch(e){
+    setStatus("warn",e&&e.name==="NotAllowedError"?"Chưa được phép dùng camera. Vào Cài đặt → Safari → Camera → Cho phép, rồi mở lại.":"Không mở được camera ("+(e&&e.name||"lỗi")+"). Dùng nút Chụp ảnh nét.");
+    return;
+  }
+  video.srcObject=stream;
+  try{await video.play();}catch(e){}
+  try{const tr=stream.getVideoTracks()[0],cap=tr.getCapabilities&&tr.getCapabilities();
+    if(cap&&cap.focusMode&&cap.focusMode.includes("continuous"))await tr.applyConstraints({advanced:[{focusMode:"continuous"}]});}catch(e){}
+  scanning=true;frameNo=0;
+  $("idle").hidden=true;$("frame").hidden=false;$("liveBadge").hidden=false;
+  const b=$("scanBtn");b.textContent="Dừng quét";b.classList.remove("primary");b.classList.add("stop");
+  setStatus("busy","Đưa mã vào giữa khung, giữ yên 1–2 giây.");
+  loop();
+}
+function stopScan(){
+  scanning=false;clearTimeout(timer);
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+  video.srcObject=null;
+  $("idle").hidden=false;$("frame").hidden=true;$("liveBadge").hidden=true;
+  const b=$("scanBtn");b.textContent="Bắt đầu quét";b.classList.add("primary");b.classList.remove("stop");
+}
+async function scanFrame(){
+  const W=video.videoWidth,H=video.videoHeight;if(!W||!H)return null;
+  if(detector){try{const f=await detector.detect(video);
+    const q=f.find(x=>x.format==="qr_code");if(q)return {text:q.rawValue,qr:true};
+    if(f.length)return {text:f[0].rawValue,qr:false};}catch(e){} return null;}
+  frameNo++;
+  // Vùng vuông giữa khung (trùng với khung ngắm)
+  const side=Math.min(W,H)*0.86,fx=(W-side)/2/W,fy=(H-side)/2/H,fw=side/W,fh=side/H;
+  const k=frameNo%4;
+  if(k===0||k===2){const r=qr(grab(video,W,H,fx,fy,fw,fh,k===0?720:900,false));if(r)return r;}
+  if(k===1){const r=qr(grab(video,W,H,fx,fy,fw,fh,800,true));if(r)return r;}
+  if(k===3){const d=grab(video,W,H,0,fy,1,fh,1280,false);const r=zx(toGray(d),d.width,d.height,ONE_D(),{rotate:(frameNo%8===7),hard:false});if(r)return r;}
+  return null;
+}
+async function loop(){
+  if(!scanning)return;
+  let r=null;try{r=await scanFrame();}catch(e){r=null;}
+  if(r&&r.text){
+    const t=Date.now();
+    if(r.text===lastText&&t-lastSeen<2500){lastSeen=t;}       // vẫn đang giữ mã cũ trước camera → bỏ qua
+    else{lastText=r.text;lastSeen=t;handleResult(r,"camera");}
+  }
+  timer=setTimeout(loop,detector?150:60);
+}
+$("scanBtn").addEventListener("click",()=>{
+  try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume();}catch(e){}
+  scanning?stopScan():startScan();
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&scanning)stopScan();});
+
+// ---------- still photos (đọc kỹ hơn, dùng khi mã QR dày khó quét) ----------
+function loadImage(file){
+  return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();
+    im.onload=()=>{res(im);setTimeout(()=>URL.revokeObjectURL(url),1000);};
+    im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("img"));};im.src=url;});
+}
+async function decodePhoto(file){
+  const im=await loadImage(file),W=im.naturalWidth,H=im.naturalHeight;
+  if(detector){try{const f=await detector.detect(im);const q=f.find(x=>x.format==="qr_code");if(q)return {text:q.rawValue,qr:true};if(f.length)return {text:f[0].rawValue,qr:false};}catch(e){}}
+  for(const tw of [800,600]){const r=qr(grab(im,W,H,0,0,1,1,tw,false));if(r)return r;}
+  {const d=grab(im,W,H,0,0,1,1,1400,false);const r=zx(toGray(d),d.width,d.height,ONE_D(),{rotate:true,hard:true});if(r)return r;await tick();}
+  const crops=[[0,0,1,1],[.15,.15,.7,.7],[.25,.25,.5,.5],[.1,.2,.8,.6],[.2,.1,.6,.8]];
+  for(const tw of [800,600,1000,1300,500])for(const c of crops)for(const m of [false,true]){
+    const r=qr(grab(im,W,H,c[0],c[1],c[2],c[3],tw,m));if(r)return r;await tick();
+  }
+  for(const tw of [1000,2200]){const d=grab(im,W,H,0,0,1,1,tw,false);const r=zx(toGray(d),d.width,d.height,[...ONE_D(),ZXing.BarcodeFormat.QR_CODE],{rotate:true,hard:true});if(r)return r;await tick();}
+  return null;
+}
+async function handleFiles(files){
+  files=[...files];if(!files.length)return;
+  const wasScanning=scanning;if(wasScanning)stopScan();
+  for(let k=0;k<files.length;k++){
+    const tagName=files.length>1?`ảnh ${k+1}/${files.length}`:"ảnh";
+    setStatus("busy",`Đang đọc ${tagName}…`);await tick();
+    let r=null;try{r=await decodePhoto(files[k]);}catch(e){r=null;}
+    if(!r){setStatus("warn",`Không đọc được mã (${tagName}). Chụp gần hơn, thẳng góc, đủ sáng, để mã chiếm phần lớn ảnh.`);beep(false);continue;}
+    handleResult(r,tagName);await tick();
+  }
+}
+$("photoInput").addEventListener("change",e=>{handleFiles(e.target.files);e.target.value="";});
+$("galInput").addEventListener("change",e=>{handleFiles(e.target.files);e.target.value="";});
+
+// ---------- manual / handheld scanner ----------
+function takeManual(forceBox){
+  const raw=$("manualText").value,p=splitSerials(raw);
+  if(!p.length){setStatus("warn","Ô nhập đang trống.");return;}
+  if(forceBox||p.length>1)addBox(p,raw,"nhập tay");else addOne(p[0],"nhập tay");
+  $("manualText").value="";
+}
+$("addBoxBtn").addEventListener("click",()=>takeManual(true));
+$("addOneBtn").addEventListener("click",()=>takeManual(false));
+$("emptyBoxBtn").addEventListener("click",()=>{state.boxes.push({qr:"",serials:[]});state.cur=state.boxes.length-1;save();render();scrollToCur();setStatus("",`Đã tạo Thùng ${state.cur+1} trống. Quét mã vạch lẻ để thêm serial vào.`);});
+// Máy quét cầm tay gõ mã rồi Enter; các dòng tới liền nhau trong một nhịp = 1 mã QR (1 thùng).
+let burst=null;
+$("manualText").addEventListener("keydown",e=>{
+  if(e.key!=="Enter")return;
+  clearTimeout(burst);
+  burst=setTimeout(()=>{const raw=$("manualText").value,p=splitSerials(raw);if(!p.length)return;
+    if(p.length>1)addBox(p,raw,"máy quét");else addOne(p[0],"máy quét");$("manualText").value="";},250);
+});
+
+// ---------- export ----------
+function buildRows(){
+  const rows=Math.max(0,...state.boxes.map(b=>b.serials.length));
+  const aoa=[["STT",...state.boxes.map((b,i)=>"Thùng "+(i+1))]];
+  for(let r=0;r<rows;r++)aoa.push([r+1,...state.boxes.map(b=>b.serials[r]?b.serials[r].v:"")]);
+  return aoa;
+}
+function fileName(){const d=new Date(),p=n=>String(n).padStart(2,"0");return `Serial-thung_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.xlsx`;}
+$("xlBtn").addEventListener("click",async()=>{
+  if(!state.boxes.length){setStatus("warn","Chưa có dữ liệu để xuất.");return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(buildRows());
+  ws["!cols"]=[{wch:6},...state.boxes.map(()=>({wch:20}))];
+  XLSX.utils.book_append_sheet(wb,ws,"Theo thung");
+  const list=[["STT","Thùng","Serial","Thời gian quét"]];let n=0;
+  state.boxes.forEach((b,i)=>b.serials.forEach(s=>list.push([++n,"Thùng "+(i+1),s.v,s.t])));
+  const ws2=XLSX.utils.aoa_to_sheet(list);ws2["!cols"]=[{wch:6},{wch:10},{wch:22},{wch:20}];
+  XLSX.utils.book_append_sheet(wb,ws2,"Danh sach");
+  const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+  const type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+  const name=fileName();
+  let file=null;try{file=new File([buf],name,{type});}catch(e){}
+  if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
+    try{await navigator.share({files:[file],title:name});setStatus("ok","Đã xuất file Excel.");return;}
+    catch(e){if(e&&e.name==="AbortError"){setStatus("","Đã huỷ.");return;}}
+  }
+  const url=URL.createObjectURL(new Blob([buf],{type}));
+  const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),4000);
+  setStatus("ok","Đã tạo file Excel "+name+".");
+});
+$("copyBtn").addEventListener("click",()=>{
+  if(!state.boxes.length){setStatus("warn","Chưa có dữ liệu để sao chép.");return;}
+  const tsv=buildRows().map(r=>r.join("\t")).join("\n");
+  const fallback=()=>{const d=document.querySelector("details.manual");d.open=true;$("manualText").value=tsv;$("manualText").select();setStatus("warn","Không sao chép tự động được. Bảng đã được đặt vào ô nhập tay, bôi đen sẵn — bấm Sao chép.");};
+  try{navigator.clipboard.writeText(tsv).then(()=>setStatus("ok","Đã sao chép bảng. Mở Excel và dán vào ô A1."),fallback);}catch(e){fallback();}
+});
+let clearArm=false,clearT=null;
+$("clearBtn").addEventListener("click",()=>{
+  const b=$("clearBtn");
+  if(!clearArm){clearArm=true;b.classList.add("arm");b.textContent="Chạm lại";clearTimeout(clearT);clearT=setTimeout(()=>{clearArm=false;b.classList.remove("arm");b.textContent="Xoá hết";},3000);return;}
+  clearArm=false;b.classList.remove("arm");b.textContent="Xoá hết";
+  state={boxes:[],cur:-1};lastAdded=new Set();lastText="";save();render();setStatus("","Đã xoá toàn bộ. Sẵn sàng quét đợt mới.");
+});
+
+// ---------- install / offline ----------
+const standalone=window.navigator.standalone||window.matchMedia("(display-mode: standalone)").matches;
+if(!standalone&&/iPhone|iPad|iPod/.test(navigator.userAgent))$("installTip").hidden=false;
+if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
+
+render();
+})();
+</script>
+</body>
+</html>
