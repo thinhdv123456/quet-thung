@@ -1,5 +1,5 @@
 // Offline cache. Đổi VERSION mỗi khi sửa file để máy tải bản mới.
-const VERSION = "quet-thung-v1";
+const VERSION = "quet-thung-v2";
 const FILES = [
   "./",
   "./index.html",
@@ -8,7 +8,8 @@ const FILES = [
   "./icon-512.png",
   "./apple-touch-icon.png",
   "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
-  "https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js",
+  "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.5/dist/iife/reader/index.js",
+  "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.5/dist/reader/zxing_reader.wasm",
   "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
 ];
 

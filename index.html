@@ -68,6 +68,8 @@ svg.i{width:20px;height:20px;flex:none}
 
 .rule{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px}
 .rule b{color:var(--ink);font-weight:600}
+.toggle{display:inline-flex;align-items:center;gap:6px;color:var(--ink)}
+.toggle input{width:18px;height:18px;accent-color:var(--accent)}
 .tag{font-family:var(--f-mono);font-size:11px;padding:1px 6px;border-radius:5px;background:var(--accent-soft);color:var(--ink)}
 
 .status{border-radius:10px;padding:10px 12px;font-size:14px;display:flex;gap:10px;align-items:flex-start;min-height:44px;background:var(--paper);border:1px solid var(--line)}
@@ -154,8 +156,8 @@ td.sn button.arm{background:var(--warn-soft);color:var(--warn);text-decoration:l
   </div>
 
   <div class="rule">
-    <span><span class="tag">QR</span> <b>tạo thùng mới</b>, tách serial xuống cột</span>
-    <span><span class="tag">Mã vạch</span> <b>thêm 1 serial</b> vào thùng đang chọn</span>
+    <span><span class="tag">QR / PDF417</span> <b>tạo thùng mới</b>, tách serial xuống cột</span>
+    <label class="toggle"><input type="checkbox" id="oneD"> Mã vạch lẻ cũng thêm làm serial</label>
   </div>
 
   <div class="status" id="status" role="status" aria-live="polite"><span class="dot"></span><div class="msg" id="statusMsg">Sẵn sàng.</div></div>
@@ -189,7 +191,7 @@ td.sn button.arm{background:var(--warn-soft);color:var(--warn);text-decoration:l
 </div></div>
 
 <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js" crossorigin="anonymous"></script>
-<script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.5/dist/iife/reader/index.js" crossorigin="anonymous"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js" crossorigin="anonymous"></script>
 <script>
 (function(){
@@ -238,14 +240,14 @@ function setStatus(kind,html,isHtml){$("status").className="status "+(kind||"");
 
 // ---------- add data ----------
 let lastAdded=new Set();
-function addBox(serials,qrText,source){
+function addBox(serials,qrText,source,code){
   const seen=allSerials(),dups=[],fresh=[],t=now(),local=new Set();
   serials.forEach(v=>{if(seen.has(v)||local.has(v))dups.push(v);else{local.add(v);fresh.push({v,t});}});
   if(!fresh.length){setStatus("warn",`Mã này đã quét rồi (trùng với Thùng ${seen.get(dups[0])+1}). Không tạo thùng mới.`);beep(false);return false;}
-  state.boxes.push({qr:qrText||"",serials:fresh});
+  state.boxes.push({qr:qrText||"",code:code||"",serials:fresh});
   state.cur=state.boxes.length-1;lastAdded=new Set(fresh.map(s=>s.v));
   save();render();scrollToCur();
-  let msg=`<b>Thùng ${state.cur+1}</b>: ${fresh.length} serial${source?" · "+esc(source):""}.`;
+  let msg=`<b>Thùng ${state.cur+1}</b>${code?" ("+esc(code)+")":""}: ${fresh.length} serial${source?" · "+esc(source):""}.`;
   if(dups.length)msg+=` Bỏ qua ${dups.length} serial trùng:<ul class="warnlist">${dups.map(d=>`<li>${esc(d)}${seen.has(d)?` (Thùng ${seen.get(d)+1})`:""}</li>`).join("")}</ul>`;
   setStatus(dups.length?"warn":"ok",msg,true);beep(!dups.length);return true;
 }
@@ -257,12 +259,14 @@ function addOne(v,source){
   save();render();scrollToCur();
   setStatus("ok",`+1 serial <b>${esc(v)}</b> → Thùng ${state.cur+1}${source?" · "+esc(source):""}.`,true);beep(true);return true;
 }
-function handleResult(r,source){
+function handleResult(r,source,code){
   const parts=splitSerials(r.text);
   if(!parts.length)return;
-  if(r.qr||parts.length>1)addBox(parts,r.text,(r.qr?"QR":"mã vạch")+(source?" · "+source:""));
-  else addOne(parts[0],"mã vạch"+(source?" · "+source:""));
+  const label=r.two?(r.fmt==="QRCode"?"QR":(r.fmt||"mã 2D")):"mã vạch";
+  if(r.two||parts.length>1)addBox(parts,r.text,label+(source?" · "+source:""),code);
+  else addOne(parts[0],label+(source?" · "+source:""));
 }
+function oneDOn(){const c=$("oneD");return !!(c&&c.checked);}
 
 // ---------- table ----------
 let armed=null;
@@ -270,12 +274,12 @@ function render(){
   const total=state.boxes.reduce((a,b)=>a+b.serials.length,0);
   $("stBoxes").textContent=state.boxes.length;$("stSerials").textContent=total;
   const g=$("grid");
-  if(!state.boxes.length){g.innerHTML=`<tbody><tr><td class="empty">Chưa có thùng nào. Bấm <b>Bắt đầu quét</b> và đưa mã QR trên thùng vào khung.</td></tr></tbody>`;return;}
+  if(!state.boxes.length){g.innerHTML=`<tbody><tr><td class="empty">Chưa có thùng nào. Bấm <b>Bắt đầu quét</b> và đưa mã QR / PDF417 trên tem thùng vào khung.</td></tr></tbody>`;return;}
   const rows=Math.max(...state.boxes.map(b=>b.serials.length),1);
   let h=`<thead><tr><th class="stt">STT</th>`;
   state.boxes.forEach((b,i)=>{
     const cur=i===state.cur,a=armed==="b"+i;
-    h+=`<th class="box${cur?" cur":""}"><button class="boxhead" data-sel="${i}" type="button"><span class="n">Thùng ${i+1}</span><span class="c">${b.serials.length} serial${cur?" · đang chọn":""}</span></button>`+
+    h+=`<th class="box${cur?" cur":""}"><button class="boxhead" data-sel="${i}" type="button"><span class="n">Thùng ${i+1}</span><span class="c">${b.code?esc(b.code)+" · ":""}${b.serials.length} serial${cur?" · đang chọn":""}</span></button>`+
        `<div class="boxtools"><button type="button" data-delbox="${i}" class="${a?"arm":""}">${a?"Chạm lần nữa để xoá":"Xoá thùng"}</button></div></th>`;
   });
   h+=`</tr></thead><tbody>`;
@@ -304,38 +308,56 @@ $("grid").addEventListener("click",e=>{
 });
 
 // ---------- decoding helpers ----------
-const ONE_D=()=>[ZXing.BarcodeFormat.CODE_128,ZXing.BarcodeFormat.CODE_39,ZXing.BarcodeFormat.CODE_93,ZXing.BarcodeFormat.EAN_13,ZXing.BarcodeFormat.EAN_8,ZXing.BarcodeFormat.UPC_A,ZXing.BarcodeFormat.ITF,ZXing.BarcodeFormat.CODABAR];
+// ZXing-C++ (WebAssembly) đọc QR, PDF417, DataMatrix, Code128…; jsQR hỗ trợ thêm cho QR dày.
+const WASM_URL="https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.5/dist/reader/zxing_reader.wasm";
+let zwReady=false;
+if(window.ZXingWASM){
+  try{ZXingWASM.prepareZXingModule({overrides:{locateFile:(p,pre)=>p.endsWith(".wasm")?WASM_URL:pre+p},fireImmediately:true})
+    .then(()=>{zwReady=true;}).catch(()=>{zwReady=false;});}catch(e){}
+}
+const TWO_D=new Set(["QRCode","MicroQRCode","RMQRCode","rMQRCode","PDF417","CompactPDF417","MicroPDF417","DataMatrix","Aztec","MaxiCode","DotCode","HanXin"]);
+const is2D=f=>TWO_D.has(f)||/QR|PDF|Matrix|Aztec/i.test(f||"");
 const tick=()=>new Promise(r=>setTimeout(r,0));
 const cv=document.createElement("canvas"),cx=cv.getContext("2d",{willReadFrequently:true});
-// Lấy một vùng (tỉ lệ) của ảnh/video, thu nhỏ về cạnh dài tw, có thể lật gương.
-function grab(src,W,H,fx,fy,fw,fh,tw,mirror){
+// Lấy một vùng của ảnh/video: thu về cạnh dài tw, xoay ang độ, co giãn riêng ngang (sx) / dọc (sy), có thể lật gương.
+function grab(src,W,H,o){
+  const fx=o.fx||0,fy=o.fy||0,fw=o.fw||1,fh=o.fh||1,ang=(o.ang||0)*Math.PI/180,sx0=o.sx||1,sy0=o.sy||1;
   const sx=W*fx,sy=H*fy,sw=W*fw,sh=H*fh;
-  const s=Math.min(1,tw/Math.max(sw,sh)),w=Math.max(1,Math.round(sw*s)),h=Math.max(1,Math.round(sh*s));
-  cv.width=w;cv.height=h;cx.setTransform(1,0,0,1,0,0);
-  if(mirror){cx.translate(w,0);cx.scale(-1,1);}
-  cx.drawImage(src,sx,sy,sw,sh,0,0,w,h);
-  return cx.getImageData(0,0,w,h);
+  const s=Math.min(1,(o.tw||1000)/Math.max(sw,sh));
+  const w=Math.max(1,Math.round(sw*s*sx0)),h=Math.max(1,Math.round(sh*s*sy0));
+  const c=Math.abs(Math.cos(ang)),n=Math.abs(Math.sin(ang));
+  const cw=Math.round(w*c+h*n),ch=Math.round(w*n+h*c);
+  cv.width=cw;cv.height=ch;cx.setTransform(1,0,0,1,0,0);cx.fillStyle="#fff";cx.fillRect(0,0,cw,ch);
+  cx.translate(cw/2,ch/2);if(ang)cx.rotate(ang);if(o.mirror)cx.scale(-1,1);
+  cx.drawImage(src,sx,sy,sw,sh,-w/2,-h/2,w,h);
+  return cx.getImageData(0,0,cw,ch);
 }
-function toGray(d){const o=new Uint8ClampedArray(d.width*d.height),a=d.data;for(let i=0,j=0;i<o.length;i++,j+=4)o[i]=(a[j]*77+a[j+1]*150+a[j+2]*29)>>8;return o;}
-function rot90(l,w,h){const o=new Uint8ClampedArray(w*h);for(let y=0;y<h;y++)for(let x=0;x<w;x++)o[x*h+(h-1-y)]=l[y*w+x];return o;}
-function zx(gray,w,h,formats,opts){
-  const hints=new Map();hints.set(ZXing.DecodeHintType.POSSIBLE_FORMATS,formats);if(opts.hard)hints.set(ZXing.DecodeHintType.TRY_HARDER,true);
-  const r=new ZXing.MultiFormatReader();r.setHints(hints);
-  const views=opts.rotate?[[gray,w,h],[rot90(gray,w,h),h,w]]:[[gray,w,h]];
-  const bins=opts.hard?[ZXing.HybridBinarizer,ZXing.GlobalHistogramBinarizer]:[ZXing.HybridBinarizer];
-  for(const [L,W,H] of views)for(const B of bins){
-    try{const res=r.decodeWithState(new ZXing.BinaryBitmap(new B(new ZXing.RGBLuminanceSource(L,W,H))));
-      return {text:res.getText(),qr:res.getBarcodeFormat()===ZXing.BarcodeFormat.QR_CODE};}catch(e){}
-  }
-  return null;
+async function zw(img,only2D){
+  if(!zwReady)return [];
+  try{const r=await ZXingWASM.readBarcodes(img,{tryHarder:true,tryRotate:true,tryInvert:false,maxNumberOfSymbols:4,formats:only2D?["QRCode","PDF417","DataMatrix","Aztec","MicroQRCode"]:[]});
+    return r.filter(x=>x.isValid&&x.text).map(x=>({text:x.text,two:is2D(x.format),fmt:x.format}));}catch(e){return [];}
 }
-function qr(d){const r=jsQR(d.data,d.width,d.height,{inversionAttempts:"dontInvert"});return r&&r.data?{text:r.data,qr:true}:null;}
+function jsqr(d){if(!window.jsQR)return null;const r=jsQR(d.data,d.width,d.height,{inversionAttempts:"dontInvert"});return r&&r.data?{text:r.data,two:true,fmt:"QRCode"}:null;}
+// Gộp kết quả: mã 2D (QR/PDF417…) là danh sách serial của thùng; mã vạch 1D đi kèm coi là mã thùng.
+function pack(list){
+  const two=list.find(x=>x.two),one=list.find(x=>!x.two);
+  return {two:two||null,one:one||null};
+}
+async function native(src){
+  if(!detector)return [];
+  try{const f=await detector.detect(src);return f.map(x=>({text:x.rawValue,two:/qr|pdf|matrix|aztec/i.test(x.format),fmt:x.format}));}catch(e){return [];}
+}
+// Các biến thể thử dần cho mã PDF417 in dày / ảnh hơi nghiêng.
+const VARIANTS=(()=>{const v=[];
+  const angs=[0,-1.5,1.5,-3,3,-0.75,0.75,-2.25,2.25,-4.5,4.5];
+  const st=[[.5,1],[1,.5],[.35,.5],[.5,.35],[1,1],[.7,1],[1,.7]];
+  for(const a of angs)for(const s of st)v.push({ang:a,sx:s[0],sy:s[1]});return v;})();
 
 // ---------- live camera ----------
-let stream=null,scanning=false,frameNo=0,lastText="",lastSeen=0,timer=null;
+let stream=null,scanning=false,frameNo=0,lastText="",lastSeen=0,timer=null,lastOne=null;
 const video=$("video");
 let detector=null;
-if("BarcodeDetector" in window){try{detector=new BarcodeDetector({formats:["qr_code","code_128","code_39","code_93","ean_13","ean_8","upc_a","itf","codabar"]});}catch(e){detector=null;}}
+if("BarcodeDetector" in window){try{detector=new BarcodeDetector({formats:["qr_code","pdf417","data_matrix","aztec","code_128","code_39","code_93","ean_13","ean_8","upc_a","itf","codabar"]});}catch(e){detector=null;}}
 
 async function startScan(){
   if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){setStatus("warn","Trình duyệt này không mở được camera trực tiếp. Dùng nút Chụp ảnh nét.");return;}
@@ -364,27 +386,36 @@ function stopScan(){
 }
 async function scanFrame(){
   const W=video.videoWidth,H=video.videoHeight;if(!W||!H)return null;
-  if(detector){try{const f=await detector.detect(video);
-    const q=f.find(x=>x.format==="qr_code");if(q)return {text:q.rawValue,qr:true};
-    if(f.length)return {text:f[0].rawValue,qr:false};}catch(e){} return null;}
   frameNo++;
-  // Vùng vuông giữa khung (trùng với khung ngắm)
-  const side=Math.min(W,H)*0.86,fx=(W-side)/2/W,fy=(H-side)/2/H,fw=side/W,fh=side/H;
-  const k=frameNo%4;
-  if(k===0||k===2){const r=qr(grab(video,W,H,fx,fy,fw,fh,k===0?720:900,false));if(r)return r;}
-  if(k===1){const r=qr(grab(video,W,H,fx,fy,fw,fh,800,true));if(r)return r;}
-  if(k===3){const d=grab(video,W,H,0,fy,1,fh,1280,false);const r=zx(toGray(d),d.width,d.height,ONE_D(),{rotate:(frameNo%8===7),hard:false});if(r)return r;}
-  return null;
+  let list=await native(video);
+  if(!list.some(x=>x.two)){
+    // lần lượt một biến thể mỗi khung hình: thẳng → nghiêng nhẹ → co giãn
+    const v=VARIANTS[Math.floor(frameNo/2)%VARIANTS.length];
+    const base=frameNo%2?{fx:.15,fy:.1,fw:.7,fh:.8,tw:1200}:{fx:0,fy:0,fw:1,fh:1,tw:1400};
+    list=list.concat(await zw(grab(video,W,H,Object.assign({},base,v)),false));
+    if(!list.some(x=>x.two)&&frameNo%3===0){
+      const side=Math.min(W,H)*0.86;
+      const r=jsqr(grab(video,W,H,{fx:(W-side)/2/W,fy:(H-side)/2/H,fw:side/W,fh:side/H,tw:800,mirror:frameNo%6===0}));
+      if(r)list.push(r);
+    }
+  }
+  return pack(list);
 }
 async function loop(){
   if(!scanning)return;
   let r=null;try{r=await scanFrame();}catch(e){r=null;}
-  if(r&&r.text){
-    const t=Date.now();
-    if(r.text===lastText&&t-lastSeen<2500){lastSeen=t;}       // vẫn đang giữ mã cũ trước camera → bỏ qua
-    else{lastText=r.text;lastSeen=t;handleResult(r,"camera");}
+  const t=Date.now();
+  if(r&&r.one)lastOne={text:r.one.text,t};
+  const hit=r&&(r.two||(r.one&&oneDOn()?r.one:null));
+  if(hit){
+    if(hit.text===lastText&&t-lastSeen<2500){lastSeen=t;}       // vẫn đang giữ mã cũ trước camera → bỏ qua
+    else{lastText=hit.text;lastSeen=t;
+      const code=r.two&&lastOne&&t-lastOne.t<5000?lastOne.text:"";
+      handleResult(hit,"camera",code);}
+  }else if(r&&r.one&&!oneDOn()&&$("status").className.indexOf("busy")>=0){
+    setStatus("busy",`Thấy mã vạch ${r.one.text}. Đưa camera vào mã 2D (QR / ô vuông dày) trên tem, giữ thẳng và gần hơn.`);
   }
-  timer=setTimeout(loop,detector?150:60);
+  timer=setTimeout(loop,30);
 }
 $("scanBtn").addEventListener("click",()=>{
   try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume&&actx.resume();}catch(e){}
@@ -392,33 +423,42 @@ $("scanBtn").addEventListener("click",()=>{
 });
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&scanning)stopScan();});
 
-// ---------- still photos (đọc kỹ hơn, dùng khi mã QR dày khó quét) ----------
+// ---------- still photos (đọc kỹ hơn, dùng khi mã dày khó quét) ----------
 function loadImage(file){
   return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const im=new Image();
     im.onload=()=>{res(im);setTimeout(()=>URL.revokeObjectURL(url),1000);};
     im.onerror=()=>{URL.revokeObjectURL(url);rej(new Error("img"));};im.src=url;});
 }
-async function decodePhoto(file){
+async function decodePhoto(file,progress){
   const im=await loadImage(file),W=im.naturalWidth,H=im.naturalHeight;
-  if(detector){try{const f=await detector.detect(im);const q=f.find(x=>x.format==="qr_code");if(q)return {text:q.rawValue,qr:true};if(f.length)return {text:f[0].rawValue,qr:false};}catch(e){}}
-  for(const tw of [800,600]){const r=qr(grab(im,W,H,0,0,1,1,tw,false));if(r)return r;}
-  {const d=grab(im,W,H,0,0,1,1,1400,false);const r=zx(toGray(d),d.width,d.height,ONE_D(),{rotate:true,hard:true});if(r)return r;await tick();}
-  const crops=[[0,0,1,1],[.15,.15,.7,.7],[.25,.25,.5,.5],[.1,.2,.8,.6],[.2,.1,.6,.8]];
-  for(const tw of [800,600,1000,1300,500])for(const c of crops)for(const m of [false,true]){
-    const r=qr(grab(im,W,H,c[0],c[1],c[2],c[3],tw,m));if(r)return r;await tick();
+  let one=null;
+  const take=list=>{const p=pack(list);if(p.one&&!one)one=p.one;return p.two;};
+  let two=take(await native(im));if(two)return {two,one};
+  for(const tw of [1600]){two=take(await zw(grab(im,W,H,{tw}),false));if(two)return {two,one};await tick();}
+  for(const tw of [800,600]){const r=jsqr(grab(im,W,H,{tw}));if(r)return {two:r,one};}
+  const crops=[{fx:.15,fy:.1,fw:.7,fh:.8},{fx:0,fy:0,fw:1,fh:1},{fx:.25,fy:.2,fw:.5,fh:.6}];
+  let n=0;const total=crops.length*VARIANTS.length;
+  for(const c of crops)for(const v of VARIANTS){
+    n++;if(progress&&n%10===0)progress(Math.round(n/total*100));
+    two=take(await zw(grab(im,W,H,Object.assign({tw:1500},c,v)),true));if(two)return {two,one};
   }
-  for(const tw of [1000,2200]){const d=grab(im,W,H,0,0,1,1,tw,false);const r=zx(toGray(d),d.width,d.height,[...ONE_D(),ZXing.BarcodeFormat.QR_CODE],{rotate:true,hard:true});if(r)return r;await tick();}
-  return null;
+  for(const tw of [1000,1300,500])for(const c of crops)for(const m of [false,true]){
+    const r=jsqr(grab(im,W,H,Object.assign({tw,mirror:m},c)));if(r)return {two:r,one};await tick();
+  }
+  return {two:null,one};
 }
 async function handleFiles(files){
   files=[...files];if(!files.length)return;
   const wasScanning=scanning;if(wasScanning)stopScan();
+  if(!zwReady){setStatus("busy","Đang tải bộ đọc mã…");for(let i=0;i<50&&!zwReady;i++)await new Promise(r=>setTimeout(r,200));}
   for(let k=0;k<files.length;k++){
     const tagName=files.length>1?`ảnh ${k+1}/${files.length}`:"ảnh";
     setStatus("busy",`Đang đọc ${tagName}…`);await tick();
-    let r=null;try{r=await decodePhoto(files[k]);}catch(e){r=null;}
-    if(!r){setStatus("warn",`Không đọc được mã (${tagName}). Chụp gần hơn, thẳng góc, đủ sáng, để mã chiếm phần lớn ảnh.`);beep(false);continue;}
-    handleResult(r,tagName);await tick();
+    let r=null;try{r=await decodePhoto(files[k],p=>setStatus("busy",`Đang đọc ${tagName}… ${p}%`));}catch(e){r=null;}
+    if(r&&r.two){handleResult(r.two,tagName,r.one?r.one.text:"");await tick();continue;}
+    if(r&&r.one&&oneDOn()){handleResult(r.one,tagName,"");await tick();continue;}
+    const extra=r&&r.one?` Chỉ thấy mã vạch ${esc(r.one.text)}.`:"";
+    setStatus("warn",`Chưa đọc được mã 2D (${tagName}).${extra} Chụp gần hơn, thẳng góc, đủ sáng, để mã chiếm phần lớn ảnh.`,true);beep(false);
   }
 }
 $("photoInput").addEventListener("change",e=>{handleFiles(e.target.files);e.target.value="";});
@@ -457,9 +497,9 @@ $("xlBtn").addEventListener("click",async()=>{
   const ws=XLSX.utils.aoa_to_sheet(buildRows());
   ws["!cols"]=[{wch:6},...state.boxes.map(()=>({wch:20}))];
   XLSX.utils.book_append_sheet(wb,ws,"Theo thung");
-  const list=[["STT","Thùng","Serial","Thời gian quét"]];let n=0;
-  state.boxes.forEach((b,i)=>b.serials.forEach(s=>list.push([++n,"Thùng "+(i+1),s.v,s.t])));
-  const ws2=XLSX.utils.aoa_to_sheet(list);ws2["!cols"]=[{wch:6},{wch:10},{wch:22},{wch:20}];
+  const list=[["STT","Thùng","Mã thùng","Serial","Thời gian quét"]];let n=0;
+  state.boxes.forEach((b,i)=>b.serials.forEach(s=>list.push([++n,"Thùng "+(i+1),b.code||"",s.v,s.t])));
+  const ws2=XLSX.utils.aoa_to_sheet(list);ws2["!cols"]=[{wch:6},{wch:10},{wch:16},{wch:22},{wch:20}];
   XLSX.utils.book_append_sheet(wb,ws2,"Danh sach");
   const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
   const type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -493,6 +533,8 @@ const standalone=window.navigator.standalone||window.matchMedia("(display-mode: 
 if(!standalone&&/iPhone|iPad|iPod/.test(navigator.userAgent))$("installTip").hidden=false;
 if("serviceWorker" in navigator&&location.protocol==="https:")navigator.serviceWorker.register("sw.js").catch(()=>{});
 
+try{$("oneD").checked=localStorage.getItem(KEY+"-1d")==="1";}catch(e){}
+$("oneD").addEventListener("change",e=>{try{localStorage.setItem(KEY+"-1d",e.target.checked?"1":"0");}catch(err){}});
 render();
 })();
 </script>
