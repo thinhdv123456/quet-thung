@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Quét Serial Thùng</title>
-<meta name="description" content="Quét mã QR thùng bằng camera, tách serial theo cột Thùng 1, Thùng 2… và xuất Excel.">
+<title>Kho Oanh Ninh Bình</title>
+<meta name="description" content="Kho Oanh Ninh Bình: quét serial theo thùng và phân bổ hàng cho nhân viên. Thủ kho Nguyễn Thị Kim Oanh.">
 <meta name="theme-color" content="#17191c">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Quét Thùng">
+<meta name="apple-mobile-web-app-title" content="Kho Oanh">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -38,6 +38,8 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-ui);font
 .wrap{max-width:860px;margin:0 auto;display:flex;flex-direction:column;gap:12px}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px}
 h1{font-size:20px;font-weight:800;margin:0;letter-spacing:-.01em}
+.brand{display:flex;flex-direction:column;min-width:0}
+.brand small{font-size:12px;color:var(--muted);font-weight:500}
 .stats{display:flex;gap:6px}
 .stat{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:4px 10px;text-align:right;min-width:64px}
 .stat b{display:block;font-size:18px;font-variant-numeric:tabular-nums;line-height:1.15}
@@ -117,19 +119,181 @@ td.sn button.arm{background:var(--warn-soft);color:var(--warn);text-decoration:l
 .bar .clear.arm{background:var(--warn);border-color:var(--warn);color:#fff}
 .install{font-size:13px;background:var(--accent-soft);border-radius:10px;padding:10px 12px}
 .install b{font-weight:700}
+
+/* tabs */
+header{flex-wrap:wrap}
+.tabs{display:flex;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:3px;gap:3px}
+.tabs button{min-height:38px;border:0;border-radius:9px;background:transparent;color:var(--muted);font-size:14px;padding:6px 12px}
+.tabs button[aria-selected="true"]{background:var(--sel);color:var(--sel-ink)}
+.tabpane{display:flex;flex-direction:column;gap:12px}
+.scanhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.scanhead h2,.cardhead h2{font-size:15px;margin:0;font-weight:700}
+
+/* allocation */
+.card{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.cardhead{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.filebtn{width:100%}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fld{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted);font-weight:600;min-width:0}
+.fld input,.fld select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;min-height:44px;width:100%}
+.fld input:focus-visible,.fld select:focus-visible,.tablectl select:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.tile{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.tile span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;font-weight:600}
+.tile b{font-size:22px;font-variant-numeric:tabular-nums;line-height:1.15}
+.tile small{font-size:11.5px;color:var(--muted)}
+.tile.bad b{color:var(--warn)}
+.tablehead{margin-top:4px}
+.tablectl{display:flex;gap:8px;align-items:center}
+.tablectl select{font:inherit;font-size:14px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:6px 8px;min-height:36px}
+button.small{min-height:36px;font-size:13px;padding:6px 10px}
+table.atable{width:100%;font-size:13.5px}
+table.atable th{font-size:11.5px;color:var(--muted);font-weight:600;text-align:left;padding:8px;background:var(--paper);position:sticky;top:0;white-space:nowrap}
+table.atable td{padding:6px 8px;white-space:nowrap}
+table.atable td.n,table.atable th.n{text-align:right;font-variant-numeric:tabular-nums}
+table.atable td.nv{white-space:normal;min-width:170px}
+table.atable td.nv b{display:block;font-weight:600}
+table.atable td.nv small{display:block;color:var(--muted);font-family:var(--f-mono);font-size:11px;overflow-wrap:anywhere}
+table.atable tr.off td{opacity:.45}
+table.atable tr.tot td{font-weight:700;border-top:2px solid var(--ink)}
+table.atable input[type=number]{width:72px;font:inherit;font-size:15px;text-align:right;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font-variant-numeric:tabular-nums}
+table.atable input.locked{border-color:var(--accent);background:var(--accent-soft)}
+table.atable input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.grp{font-size:11px;padding:1px 6px;border-radius:5px;background:var(--bg);border:1px solid var(--line);color:var(--muted)}
+.bar .in.in2{grid-template-columns:1.4fr 1fr}
+#allocBar .in{max-width:1440px}
+.bar[hidden]{display:none!important}
+.mob{display:none!important}
+@media (max-width:560px){.tiles{grid-template-columns:1fr 1fr}.form{grid-template-columns:1fr}
+  table.atable .wide{display:none}table.atable .mob{display:block!important;font-family:var(--f-ui)!important}
+  table.atable td.nv{min-width:0;max-width:46vw}table.atable td.nv small{overflow-wrap:anywhere}
+  table.atable td,table.atable th{padding:6px 5px}table.atable input[type=number]{width:58px}}
+.form3{grid-template-columns:1fr 1fr 1fr}
+.dlist{display:flex;flex-direction:column;gap:10px}
+.dcard{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--line);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.dcard.ok{border-left-color:var(--ok)} .dcard.short{border-left-color:var(--warn)} .dcard.kho{border-style:dashed}
+.dtop{display:flex;align-items:center;gap:10px}
+.dord{display:flex;flex-direction:column;gap:2px}
+button.ic{min-height:26px;width:30px;padding:0;font-size:14px;border-radius:7px}
+.dname{flex:1;min-width:0;display:flex;flex-direction:column}
+.dname b{font-size:15px}.dname small,.dnum small{font-size:12px;color:var(--muted)}
+.dnum{text-align:right;display:flex;flex-direction:column}
+.dnum b{font-size:20px;font-variant-numeric:tabular-nums;line-height:1.1}
+.dcard.short .dnum b{color:var(--warn)}
+.drow{display:grid;grid-template-columns:1fr 1.4fr;gap:8px}
+.boxes{display:flex;flex-wrap:wrap;gap:6px}
+.box{display:flex;align-items:center;gap:6px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:4px 4px 4px 9px;font-size:13px}
+.box small{display:block;font-family:var(--f-mono);font-size:10.5px;color:var(--muted)}
+.box select{font:inherit;font-size:12.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:7px;padding:4px;max-width:130px}
+.dcard details summary{cursor:pointer;font-size:13.5px;font-weight:600;color:var(--ink);padding:4px 0}
+.grp.rc{background:var(--accent-soft);border-color:var(--accent);color:var(--ink)}
+.warnline{color:var(--warn)}
+.mob2{font-family:var(--f-ui)!important}
+@media (max-width:560px){.form3{grid-template-columns:1fr 1fr 1fr}.form3 .fld span{font-size:11px}.drow{grid-template-columns:1fr}}
+.wrap.wide{max-width:1440px}
+.setup3{display:grid;grid-template-columns:1fr 1.2fr 1.1fr;gap:12px;align-items:start}
+table.packs{border-collapse:collapse;width:100%;font-size:13.5px}
+table.packs th{font-size:11.5px;color:var(--muted);text-align:left;font-weight:600;padding:4px 6px 4px 0}
+table.packs td{padding:3px 6px 3px 0}
+table.packs input{width:100%;max-width:120px;font:inherit;font-size:15px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
+table.packs td.n,table.packs th.n{text-align:right;font-variant-numeric:tabular-nums}
+table.mtx td,table.mtx th{vertical-align:middle}
+table.mtx th small,table.mtx td small{display:block;font-size:11px;font-weight:500;color:var(--muted)}
+table.mtx input[type=number]{width:52px;padding:5px 4px}
+table.mtx input[data-need]{width:64px}
+table.mtx td,table.mtx th{padding:6px 6px}
+table.mtx tr[data-pick]{cursor:pointer}
+table.mtx tr[data-pick]:hover td{background:var(--bg)}
+table.mtx tr.sel td{background:var(--accent-soft)}
+table.mtx td.ord{white-space:nowrap}
+table.mtx td.ord .ic{min-height:24px;width:22px;margin-right:1px;font-size:12px}
+.neg{color:var(--warn)!important;font-weight:600}.pos{color:var(--ok)!important}
+.detail{display:flex;flex-direction:column;gap:10px;margin-top:6px;padding-top:12px;border-top:2px solid var(--ink)}
+.split2{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:14px;align-items:start}
+.pane{display:flex;flex-direction:column;gap:8px;min-width:0}
+.pane h3{font-size:14px;margin:0}
+td.tags{white-space:normal!important;max-width:260px}
+td.tags .grp{display:inline-block;margin:1px 0}
+.blist{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:8px}
+.bx{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.bx.man{border-color:var(--accent)} .bx.bad{border-color:var(--warn)}
+.bxh{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px}
+.bxh small{color:var(--muted);font-size:12px}
+.bxsum{color:var(--warn);font-size:12px;font-weight:600}
+.bxh .small{margin-left:auto;min-height:28px;padding:2px 8px;font-size:12px}
+.part{display:grid;grid-template-columns:1fr 64px 30px;gap:6px;align-items:center}
+.part select,.part input{font:inherit;font-size:13.5px;padding:5px 6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);min-width:0}
+.part input{text-align:right}
+.part .ic{min-height:30px;width:30px}
+.bx .add{align-self:flex-start;min-height:28px;padding:2px 10px;font-size:12.5px}
+label.inline{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted)}
+label.inline select{font:inherit;font-size:13.5px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:5px 6px}
+@media (max-width:1100px){.setup3{grid-template-columns:1fr 1fr}.split2{grid-template-columns:1fr}}
+@media (max-width:700px){.setup3{grid-template-columns:1fr}}
+.md{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.1fr);gap:18px;align-items:start}
+.mdL,.mdR{display:flex;flex-direction:column;gap:8px;min-width:0}
+.mdR{background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:12px;position:sticky;top:10px;max-height:calc(100vh - 110px);overflow:auto}
+.mdR .gridwrap{border-radius:10px}
+table.mtx td.hname small{display:block}
+table.atable th.pk,table.atable td.pk{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+table.stf input[type=number]{width:48px;padding:5px 4px}
+table.stf th small{display:block;font-size:10.5px;font-weight:500;color:var(--muted)}
+table.stf td,table.stf th{padding:5px 5px}
+table.stf td.nv{min-width:130px}
+.check{border-radius:10px;padding:8px 10px;font-size:13.5px;background:var(--bg)}
+.check.ok{background:var(--ok-soft)}.check.warn{background:var(--warn-soft)}
+@media (max-width:1380px){.md{grid-template-columns:1fr}.mdR{position:static;max-height:none}}
+.setup2{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.opt{font-weight:500;color:var(--muted);font-size:12.5px}
+table.items{min-width:880px}
+table.items td{padding:5px 6px}
+table.items input{font:inherit;font-size:14.5px;width:100%;min-width:64px;padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);text-align:right}
+table.items input.qty{min-width:96px;font-weight:600;font-size:15.5px}
+table.items input.code{text-align:left;min-width:170px;font-family:var(--f-mono);font-size:13.5px}
+table.items input.badin{border-color:var(--warn);background:var(--warn-soft)}
+table.items td.qr{white-space:nowrap;font-weight:600}
+.newtag{display:inline-block;font-size:11.5px;font-weight:600;padding:2px 7px;border-radius:6px;background:var(--accent-soft);color:var(--ink);white-space:nowrap}
+table.items td.qr small{display:block;font-weight:400;color:var(--muted);font-size:11.5px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chips button{flex-direction:column;align-items:flex-start;gap:0;min-height:48px;padding:6px 12px;border-radius:10px;text-align:left}
+.chips button b{font-family:var(--f-mono);font-size:13.5px}
+.chips button small{font-size:11.5px;color:var(--muted);font-weight:500}
+.chips button[aria-pressed="true"]{background:var(--sel);color:var(--sel-ink);border-color:var(--sel)}
+.chips button[aria-pressed="true"] small{color:inherit;opacity:.8}
+.chips .chotchip{border-style:dashed}
+.chotwrap{max-height:70vh}
+table.chot th{position:sticky;top:0;z-index:2}
+table.chot thead tr.tot td{position:sticky;top:31px;background:var(--paper);z-index:2}
+table.chot tr.extra td{background:var(--accent-soft)}
+table.chot tr.nomatch td{color:var(--muted)}
+@media (max-width:900px){.setup2{grid-template-columns:1fr}}
+td.pkcell{min-width:230px}
+.pkrow{display:grid;grid-template-columns:1fr 14px 1fr 28px;gap:4px;align-items:center;margin-bottom:4px}
+.pkrow span{color:var(--muted);text-align:center}
+.pkrow .ic{min-height:28px;width:28px;font-size:12px}
+.pkadd{min-height:26px;padding:2px 8px;font-size:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <h1>Quét Serial Thùng</h1>
+    <div class="brand"><h1>Kho Oanh Ninh Bình</h1><small>Quét serial · Phân bổ hàng — Thủ kho Nguyễn Thị Kim Oanh</small></div>
+    <nav class="tabs" role="tablist">
+      <button type="button" role="tab" id="tabBtnScan" data-tab="scan" aria-selected="true">Quét thùng</button>
+      <button type="button" role="tab" id="tabBtnAlloc" data-tab="alloc" aria-selected="false">Phân bổ hàng</button>
+    </nav>
+  </header>
+
+  <div class="install" id="installTip" hidden>Để dùng như app: bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm vào MH chính</b>.</div>
+
+<section id="tabScan" class="tabpane">
+  <div class="scanhead">
+    <h2>Quét serial theo thùng</h2>
     <div class="stats">
       <div class="stat"><b id="stBoxes">0</b><span>Thùng</span></div>
       <div class="stat"><b id="stSerials">0</b><span>Serial</span></div>
     </div>
-  </header>
-
-  <div class="install" id="installTip" hidden>Để dùng như app: bấm nút <b>Chia sẻ</b> của Safari → <b>Thêm vào MH chính</b>.</div>
+  </div>
 
   <div class="cam" id="cam">
     <video id="video" playsinline muted autoplay></video>
@@ -180,9 +344,90 @@ td.sn button.arm{background:var(--warn-soft);color:var(--warn);text-decoration:l
     <span class="hint">Chạm tên thùng để chọn · chạm serial 2 lần để xoá</span>
   </div>
   <div class="gridwrap"><table id="grid"></table></div>
+</section>
+
+<section id="tabAlloc" class="tabpane" hidden>
+  <div class="setup2">
+    <div class="card">
+      <div class="cardhead"><h2>1 · Tồn kho BCCS</h2></div>
+      <label class="btn filebtn">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/></svg>
+        Chọn file tồn kho BCCS
+        <input id="aFile" type="file" accept=".xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel">
+      </label>
+      <p class="hint" id="aSrc">Chưa có file. App đọc sheet <b>Chi tiết NV</b>.</p>
+    </div>
+    <div class="card">
+      <div class="cardhead"><h2>2 · File mẫu chốt <span class="opt">(nên có)</span></h2><button type="button" class="small" id="aTplDel" hidden>Bỏ mẫu</button></div>
+      <label class="btn filebtn">
+        <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+        Chọn file đặt hàng có sheet “chot”
+        <input id="aTpl" type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+      </label>
+      <p class="hint" id="aTplInfo">Có file mẫu thì app điền số vào đúng sheet <b>chot</b> của anh, giữ nguyên định dạng, công thức và các sheet khác. Không có mẫu thì app tự tạo sheet chot cùng bố cục.</p>
+    </div>
+  </div>
+
+  <div class="card" id="aItemsCard" hidden>
+    <div class="cardhead"><h2>3 · Hàng cần chia</h2><label class="inline">Trạng thái <select id="aStatus"></select></label></div>
+    <datalist id="aCodes"></datalist>
+    <div class="gridwrap"><table class="atable items" id="aItems"></table></div>
+    <button type="button" class="small" id="aAddItem">+ Thêm mặt hàng</button>
+    <p class="hint">Gõ mã bất kỳ, kể cả mặt hàng mới chưa có trong tồn kho (khi đó coi như mọi người đang tồn 0 và chia theo định mức). Nhập <b>tổng số lượng cần chia</b> rồi khai quy cách: ô số thùng để trống thì máy tự lấy tối đa (số mờ), phần dư là hàng lẻ. Nhiều kiểu đóng thùng thì bấm <b>+ quy cách</b>, ví dụ 1.000 chiếc gồm 32 × 25 thùng, còn lại thùng 20. Hàng không đóng thùng thì bỏ trống quy cách. Định mức tồn đặt riêng cho từng mặt hàng.</p>
+  </div>
+
+  <div id="aResult" hidden>
+    <nav class="chips" id="aChips" aria-label="Chọn mặt hàng"></nav>
+
+    <div id="aItemView">
+      <div class="tiles">
+        <div class="tile"><span>Hàng có</span><b id="tSupply">0</b><small id="tSupplySub"></small></div>
+        <div class="tile"><span>Nhu cầu</span><b id="tNeed">0</b><small id="tNeedSub"></small></div>
+        <div class="tile"><span>Đã giao huyện</span><b id="tGot">0</b><small id="tGotSub"></small></div>
+        <div class="tile"><span>Còn trong kho</span><b id="tLeft">0</b><small id="tLeftSub"></small></div>
+      </div>
+      <div class="status" id="aStatusMsg" role="status" aria-live="polite"><span class="dot"></span><div class="msg" id="aMsg"></div></div>
+      <div class="md">
+        <div class="mdL">
+          <div class="cardhead tablehead">
+            <h2 id="aMtxTitle">4 · Chia cho huyện</h2>
+            <button type="button" id="aReset" class="small">Về gợi ý của máy</button>
+          </div>
+          <p class="hint">Máy điền sẵn theo nhu cầu, huyện xếp trên được ưu tiên (↑↓ đổi thứ tự). Gõ số khác vào ô nếu anh muốn, ô sửa tay có nền vàng. Bấm tên huyện để chia cho nhân viên.</p>
+          <div class="gridwrap"><table class="atable mtx" id="aMatrix"></table></div>
+        </div>
+        <div class="mdR" id="aDetail" hidden>
+          <div class="cardhead tablehead">
+            <h2 id="aDetTitle"></h2>
+            <div class="tablectl">
+              <label class="inline">Giao hết cho <select id="aAllTo"></select></label>
+              <button type="button" id="aAutoD" class="small">Máy gợi ý lại</button>
+            </div>
+          </div>
+          <p class="hint">Ghi số thùng nguyên mỗi người nhận. Hàng lẻ, hoặc thùng tháo ra chia chung, ghi vào cột <b>Lẻ</b> (chiếc).</p>
+          <div class="check" id="aCheck"></div>
+          <div class="gridwrap"><table class="atable stf" id="aStaff"></table></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="aChotView" hidden>
+      <div class="cardhead tablehead"><h2>Bảng chốt: số chiếc mỗi nhân viên nhận</h2><span class="hint" id="aChotInfo"></span></div>
+      <div class="status warn" id="aChotWarn" hidden><span class="dot"></span><div class="msg" id="aChotWarnMsg"></div></div>
+      <div class="gridwrap chotwrap"><table class="atable chot" id="aChot"></table></div>
+    </div>
+  </div>
+</section>
 </div>
 
-<div class="bar"><div class="in">
+<div class="bar" id="allocBar" hidden><div class="in in2">
+  <button class="xl" id="aXlBtn" type="button">
+    <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+    Xuất file chốt</button>
+  <button id="aCopyBtn" type="button">Sao chép bảng chốt</button>
+</div></div>
+
+<div class="bar" id="scanBar"><div class="in">
   <button class="xl" id="xlBtn" type="button">
     <svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
     Xuất Excel</button>
@@ -501,19 +746,22 @@ $("xlBtn").addEventListener("click",async()=>{
   state.boxes.forEach((b,i)=>b.serials.forEach(s=>list.push([++n,"Thùng "+(i+1),b.code||"",s.v,s.t])));
   const ws2=XLSX.utils.aoa_to_sheet(list);ws2["!cols"]=[{wch:6},{wch:10},{wch:16},{wch:22},{wch:20}];
   XLSX.utils.book_append_sheet(wb,ws2,"Danh sach");
+  await saveWorkbook(wb,fileName(),setStatus);
+});
+// Lưu file Excel: iPhone mở bảng chia sẻ (Lưu vào Tệp / Zalo…), máy tính thì tải về.
+async function saveWorkbook(wb,name,report){
   const buf=XLSX.write(wb,{bookType:"xlsx",type:"array"});
   const type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-  const name=fileName();
   let file=null;try{file=new File([buf],name,{type});}catch(e){}
   if(file&&navigator.canShare&&navigator.canShare({files:[file]})){
-    try{await navigator.share({files:[file],title:name});setStatus("ok","Đã xuất file Excel.");return;}
-    catch(e){if(e&&e.name==="AbortError"){setStatus("","Đã huỷ.");return;}}
+    try{await navigator.share({files:[file],title:name});report("ok","Đã xuất file Excel.");return;}
+    catch(e){if(e&&e.name==="AbortError"){report("","Đã huỷ.");return;}}
   }
   const url=URL.createObjectURL(new Blob([buf],{type}));
   const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),4000);
-  setStatus("ok","Đã tạo file Excel "+name+".");
-});
+  report("ok","Đã tạo file Excel "+name+".");
+}
 $("copyBtn").addEventListener("click",()=>{
   if(!state.boxes.length){setStatus("warn","Chưa có dữ liệu để sao chép.");return;}
   const tsv=buildRows().map(r=>r.join("\t")).join("\n");
@@ -527,6 +775,485 @@ $("clearBtn").addEventListener("click",()=>{
   clearArm=false;b.classList.remove("arm");b.textContent="Xoá hết";
   state={boxes:[],cur:-1};lastAdded=new Set();lastText="";save();render();setStatus("","Đã xoá toàn bộ. Sẵn sàng quét đợt mới.");
 });
+
+// ---------- tabs ----------
+function showTab(t){
+  const scan=t!=="alloc";
+  $("tabScan").hidden=!scan;$("tabAlloc").hidden=scan;
+  $("scanBar").hidden=!scan;$("allocBar").hidden=scan||!A.rows.length;
+  $("tabBtnScan").setAttribute("aria-selected",String(scan));$("tabBtnAlloc").setAttribute("aria-selected",String(!scan));
+  if(!scan&&scanning)stopScan();
+  document.querySelector(".wrap").classList.toggle("wide",!scan);
+  if(!scan&&typeof aRender==="function")aRender();
+  try{localStorage.setItem(KEY+"-tab",t);}catch(e){}
+}
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+
+// ---------- phân bổ hàng (nhiều mặt hàng) ----------
+// Mỗi mặt hàng: tổng số lượng + quy cách thùng + định mức → chia cho huyện (thùng + lẻ) → chia cho nhân viên → bảng chốt.
+const AKEY=KEY+"-alloc4",TKEY=KEY+"-tpl";
+let A={rows:[],staff:[],src:"",reportTime:"",status:"Hàng mới",
+  items:[],cur:0,order:[],excluded:{},pNorm:{},dNeed:{},cell:{},pcell:{},sel:""};
+let TPL=null;          // {name, b64, rows:[{name,code,cum,huyen}], items:[...]}
+let aPlans=[],aPlan=null;
+function aSave(){try{localStorage.setItem(AKEY,JSON.stringify(A));}catch(e){}}
+function aLoad(){try{const s=JSON.parse(localStorage.getItem(AKEY)||"null");if(s&&Array.isArray(s.rows))A=Object.assign(A,s);}catch(e){}
+  try{TPL=JSON.parse(localStorage.getItem(TKEY)||"null");}catch(e){TPL=null;}}
+const norm=s=>String(s==null?"":s).normalize("NFC").replace(/\s+/g," ").trim();
+const low=s=>norm(s).toLowerCase();
+const fmt=n=>Number(n).toLocaleString("vi-VN");
+const int0=v=>Math.max(0,Math.floor(Number(v)||0));
+const NOH="(chưa rõ huyện)";
+function groupOf(nv){const u=nv.toUpperCase();if(/_HKD?_/.test(u))return "Đại lý HKD";if(/CTVDM|VCC_DM|CTV/.test(u))return "CTV / VCC";return "NV chính";}
+function splitNv(nv){const i=nv.indexOf(" - ");return i>0?{id:nv.slice(0,i).trim(),name:nv.slice(i+3).trim()}:{id:nv,name:""};}
+const titleCase=s=>norm(s).toLowerCase().replace(/(^|\s)(\S)/g,(m,a,b)=>a+b.toUpperCase());
+const shortName=nv=>{const s=splitNv(nv);return s.name?titleCase(s.name):s.id;};
+const sub=(o,k)=>(o[k]=o[k]||{});
+
+function parseWorkbook(buf,fname){
+  const wb=XLSX.read(buf,{type:"array"});
+  const sn=wb.SheetNames.find(n=>low(n).includes("chi tiết nv"))||wb.SheetNames.find(n=>low(n).includes("chi tiết"));
+  if(!sn)throw new Error("Không thấy sheet “Chi tiết NV” trong file.");
+  const g=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:"",raw:true});
+  let h=-1;
+  for(let i=0;i<Math.min(g.length,40);i++){const r=g[i].map(low);if(r.includes("nhân viên")&&r.includes("mã mặt hàng")&&r.includes("trạng thái")){h=i;break;}}
+  if(h<0)throw new Error("Không tìm thấy dòng tiêu đề (Nhân viên, Mã mặt hàng, Trạng thái).");
+  const H=g[h].map(low),col=n=>H.indexOf(n);
+  const cNv=col("nhân viên"),cCode=col("mã mặt hàng"),cSt=col("trạng thái");
+  let cQty=col("số lượng đáp ứng");if(cQty<0)cQty=col("số lượng thực tế");
+  if(cQty<0)throw new Error("Không thấy cột “Số lượng đáp ứng”.");
+  let cH=H.findIndex(x=>x==="huyện"||x==="địa bàn"||x==="khu vực");
+  if(cH<0&&!H[cQty+1])cH=cQty+1;   // cột huyện không có tiêu đề, nằm ngay sau "Số lượng đáp ứng"
+  let reportTime="";
+  for(let i=0;i<h;i++){const r=g[i];for(let j=0;j<r.length;j++)if(low(r[j]).startsWith("thời gian lấy báo cáo"))reportTime=norm(r[j+1]);}
+  const rows=[],huyen={};
+  for(let i=h+1;i<g.length;i++){
+    const r=g[i];const nv=norm(r[cNv]),code=norm(r[cCode]);
+    if(!nv||!code)continue;
+    const hv=cH>=0?norm(r[cH]):"";if(hv&&!huyen[nv])huyen[nv]=hv;
+    rows.push({nv,code,status:norm(r[cSt]),qty:Number(r[cQty])||0});
+  }
+  if(!rows.length)throw new Error("Sheet “Chi tiết NV” không có dòng dữ liệu nào.");
+  const names=[...new Set(rows.map(r=>r.nv))];
+  return {rows,staff:names.map(nv=>({nv,huyen:huyen[nv]||""})),src:fname,reportTime};
+}
+// Đọc sheet chot của file mẫu: danh sách người (cụm, tên, mã kho, huyện) + mã hàng ở dòng tiêu đề.
+function parseTemplate(buf,fname){
+  const wb=XLSX.read(buf,{type:"array"});
+  const sn=wb.SheetNames.find(n=>low(n)==="chot")||wb.SheetNames.find(n=>low(n).includes("chot")||low(n).includes("chốt"));
+  if(!sn)throw new Error("File này không có sheet “chot”.");
+  const g=XLSX.utils.sheet_to_json(wb.Sheets[sn],{header:1,defval:"",raw:true});
+  let h=-1;for(let i=0;i<Math.min(g.length,20);i++){const r=g[i].map(low);if(r.includes("họ và tên")){h=i;break;}}
+  if(h<0)throw new Error("Sheet chot không có cột “Họ Và Tên”.");
+  const H=g[h].map(low),cName=H.indexOf("họ và tên"),cCode=H.indexOf("mã kho"),cCum=Math.max(0,cName-1);
+  const cIn=H.indexOf("in");
+  const itemCols=[];for(let j=cName+3;j<(cIn>0?cIn:H.length);j++)itemCols.push({col:j,code:norm(g[h][j])});
+  const people=[];
+  for(let i=h+1;i<g.length;i++){const nm=norm(g[i][cName]);if(!nm||low(nm)==="tổng")continue;
+    people.push({row:i,name:nm,code:cCode>=0?norm(g[i][cCode]):"",cum:norm(g[i][cCum]),huyen:cIn>0?norm(g[i][cIn+1]):""});}
+  return {name:fname,sheet:sn,headerRow:h,cName,cCode,cIn,itemCols,people};
+}
+const b64=buf=>{let s="";const u=new Uint8Array(buf);for(let i=0;i<u.length;i+=0x8000)s+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000));return btoa(s);};
+const unb64=s=>{const bin=atob(s),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u.buffer;};
+
+// San bằng theo "tồn − định mức": người thiếu nhiều được bù trước, tổng đúng bằng total.
+function levelFill(base,total){
+  const n=base.length,give=new Array(n).fill(0);
+  if(!n||total<=0)return give;
+  let lo=Math.min(...base),hi=Math.max(...base)+total+1;
+  const need=L=>base.reduce((a,s)=>a+Math.max(0,Math.floor(L-s)),0);
+  for(let k=0;k<80;k++){const m=(lo+hi)/2;if(need(m)>total)hi=m;else lo=m;}
+  let used=0;for(let i=0;i<n;i++){give[i]=Math.max(0,Math.floor(lo-base[i]));used+=give[i];}
+  const order=[...Array(n).keys()].sort((a,b)=>(base[a]+give[a])-(base[b]+give[b])||base[a]-base[b]);
+  for(let k=0;used<total;k=(k+1)%n){give[order[k]]++;used++;}
+  return give;
+}
+
+function itemNorm(it,g){return g==="NV chính"?int0(it.nNV):g==="CTV / VCC"?int0(it.nCTV):int0(it.nHKD);}
+// Mặt hàng: nhiều quy cách đóng thùng (packs: [{size,count}]) + hàng lẻ (loose). Bản cũ (qty, pack) được đổi sang dạng này.
+function migrateItem(it){
+  if(!Array.isArray(it.packs)){const s=int0(it.pack);it.packs=s?[{size:s,count:""}]:[];delete it.pack;}
+  if(it.qty==null||it.qty===""){const b=(it.packs||[]).reduce((a,p)=>a+int0(p.size)*int0(p.count),0)+int0(it.loose);if(b)it.qty=b;}
+  delete it.loose;
+  if(!it.packs.length)it.packs.push({size:"",count:""});
+  return it;
+}
+// Tổng số lượng cần chia + các quy cách đóng thùng. Ô số thùng để trống = máy tự lấy tối đa theo phần còn lại; phần dư là hàng lẻ.
+function itemSupply(it){
+  const qty=int0(it.qty),avail={},autoC=[];let rem=qty;
+  (it.packs||[]).forEach((p,j)=>{const s=int0(p.size);if(!s)return;
+    let c;if(p.count===""||p.count==null){c=Math.floor(Math.max(0,rem)/s);autoC[j]=c;}else c=int0(p.count);
+    if(c){avail[s]=(avail[s]||0)+c;rem-=c*s;}});
+  const sizes=Object.keys(avail).map(Number).sort((a,b)=>b-a);
+  const boxU=sizes.reduce((a,s)=>a+s*avail[s],0);
+  return {sizes,avail,L:Math.max(0,qty-boxU),qty,boxes:sizes.reduce((a,s)=>a+avail[s],0),overBox:boxU>qty?boxU-qty:0,autoC};
+}
+const packText=(sizes,cnt,L)=>{const t=sizes.filter(s=>cnt[s]>0).map(s=>`${cnt[s]} thùng ${s}`);if(L)t.push(`${L} lẻ`);return t.join(" + ")||"0";};
+// Chọn số thùng mỗi quy cách để tổng gần target nhất (counts: {size: số thùng còn}).
+function pickCounts(counts,target){
+  const sizes=Object.keys(counts).map(Number).filter(s=>counts[s]>0);
+  const out={};sizes.forEach(s=>out[s]=0);
+  if(target<=0||!sizes.length)return out;
+  const total=sizes.reduce((a,s)=>a+s*counts[s],0);
+  if(total<=target){sizes.forEach(s=>out[s]=counts[s]);return out;}
+  const cap=Math.min(total,target+Math.max(...sizes));
+  const items=[];sizes.sort((a,b)=>b-a).forEach(s=>{for(let k=0;k<counts[s];k++)items.push(s);});
+  const from=new Int32Array(cap+1).fill(-1),prev=new Int32Array(cap+1).fill(-1);from[0]=-2;
+  items.forEach((q,i)=>{for(let x=cap-q;x>=0;x--)if(from[x]!==-1&&from[x+q]===-1){from[x+q]=i;prev[x+q]=x;}});
+  let best=0,bd=Infinity;
+  for(let x=0;x<=cap;x++)if(from[x]!==-1){const d=Math.abs(x-target)+(x>target?0.5:0);if(d<bd){bd=d;best=x;}}
+  let x=best;while(x>0){out[items[from[x]]]++;x=prev[x];}
+  return out;
+}
+function planItem(it){
+  migrateItem(it);
+  const code=norm(it.code).toUpperCase(),label=norm(it.code),st=A.status;
+  const {sizes,avail,L,qty,boxes,overBox}=itemSupply(it);
+  const stock={};A.rows.forEach(r=>{if(r.code.toUpperCase()===code&&r.status===st)stock[r.nv]=(stock[r.nv]||0)+r.qty;});
+  const pn=A.pNorm[code]||{};
+  const people=A.staff.map(x=>{const g=groupOf(x.nv),nm=pn[x.nv]!=null?pn[x.nv]:itemNorm(it,g),s0=stock[x.nv]||0;
+    return {nv:x.nv,huyen:x.huyen||NOH,group:g,stock:s0,normv:nm,on:!A.excluded[x.nv],need:Math.max(0,nm-s0),b:{},loose:0,recv:0,manual:false};});
+  const names=[...new Set(people.map(p=>p.huyen))];
+  const auto={};names.forEach(h=>auto[h]=people.filter(p=>p.huyen===h&&p.on).reduce((a,p)=>a+p.need,0));
+  let order=(A.order||[]).filter(h=>names.includes(h));
+  names.filter(h=>!order.includes(h)).sort((a,b)=>auto[b]-auto[a]).forEach(h=>order.push(h));
+  const dn=A.dNeed[code]||{},cl=A.cell[code]||{};
+  const D=order.map(h=>({h,auto:auto[h],need:dn[h]!=null&&dn[h]!==""?int0(dn[h]):auto[h],
+    stock:people.filter(p=>p.huyen===h).reduce((a,p)=>a+p.stock,0),people:people.filter(p=>p.huyen===h),cnt:{},eb:{},el:false,loose:0}));
+  const left={...avail};let remL=L;
+  // ô anh đã sửa được giữ trước
+  D.forEach(d=>{const c=cl[d.h]||{};sizes.forEach(s=>{if(c.b&&c.b[s]!=null){d.cnt[s]=int0(c.b[s]);d.eb[s]=true;left[s]-=d.cnt[s];}});
+    if(c.loose!=null){d.loose=int0(c.loose);d.el=true;remL-=d.loose;}});
+  // phần còn lại máy chia theo thứ tự ưu tiên huyện
+  D.forEach(d=>{
+    const fixed=sizes.reduce((a,s)=>a+(d.eb[s]?d.cnt[s]*s:0),0)+(d.el?d.loose:0);
+    const counts={};sizes.forEach(s=>{if(!d.eb[s])counts[s]=Math.max(0,left[s]);});
+    const pick=pickCounts(counts,Math.max(0,d.need-fixed));
+    sizes.forEach(s=>{if(!d.eb[s]){d.cnt[s]=pick[s]||0;left[s]-=d.cnt[s];}});
+    const boxU=sizes.reduce((a,s)=>a+d.cnt[s]*s,0);
+    if(!d.el){d.loose=Math.min(Math.max(0,remL),Math.max(0,d.need-boxU));remL-=d.loose;}
+    d.got=boxU+d.loose;
+  });
+  D.forEach(d=>splitDistrict(d,sizes,code));
+  return {it,code,label,sizes,avail,left,L,remL,qty,boxes,overBox,people,D,
+    over:sizes.some(s=>left[s]<0)||remL<0,
+    need:D.reduce((a,d)=>a+d.need,0),got:D.reduce((a,d)=>a+d.got,0),stockTotal:people.reduce((a,p)=>a+p.stock,0)};
+}
+function splitDistrict(d,sizes,code){
+  const on=d.people.filter(p=>p.on),man=(A.pcell[code]||{})[d.h]||{};
+  d.sizes=sizes.filter(s=>(d.cnt[s]||0)>0);
+  const freeB={};d.sizes.forEach(s=>freeB[s]=d.cnt[s]);
+  let mU=0,mL=0;
+  on.forEach(p=>{const m=man[p.nv];if(!m)return;p.manual=true;
+    d.sizes.forEach(s=>{p.b[s]=int0((m.b||{})[s]);freeB[s]-=p.b[s];mU+=p.b[s]*s;});p.loose=int0(m.loose);mL+=p.loose;});
+  const auto=on.filter(p=>!p.manual);
+  const tgt=levelFill(auto.map(p=>p.stock-p.normv),Math.max(0,d.got-mU-mL));
+  const o=auto.map((p,i)=>({p,r:tgt[i]}));
+  // thùng nguyên: thùng to trước, giao cho người đang thiếu nhiều nhất
+  if(o.length)d.sizes.forEach(s=>{for(let k=0;k<Math.max(0,freeB[s]);k++){const x=o.reduce((a,b)=>b.r>a.r?b:a);x.p.b[s]=(x.p.b[s]||0)+1;x.r-=s;}});
+  // hàng lẻ của huyện chia cho người còn thiếu
+  const nl=Math.max(0,d.loose-mL);
+  if(o.length){const g=levelFill(o.map(x=>-x.r),nl);o.forEach((x,i)=>x.p.loose=g[i]);}
+  d.people.forEach(p=>{p.recv=d.sizes.reduce((a,s)=>a+(p.b[s]||0)*s,0)+p.loose;p.after=p.stock+p.recv;});
+  d.assigned=on.reduce((a,p)=>a+p.recv,0);
+  d.restB={};d.sizes.forEach(s=>d.restB[s]=d.cnt[s]-on.reduce((a,p)=>a+(p.b[s]||0),0));
+  d.looseAvail=d.loose+d.sizes.reduce((a,s)=>a+Math.max(0,d.restB[s])*s,0);
+  d.looseTotal=on.reduce((a,p)=>a+p.loose,0);
+  d.ok=d.sizes.every(s=>d.restB[s]>=0)&&d.looseTotal===d.looseAvail;
+}
+
+// ---------- vẽ giao diện ----------
+function itemsRowsHtml(){
+  return A.items.map((it,i)=>{migrateItem(it);const code=norm(it.code).toUpperCase(),p=aPlans[i];
+    const known=!code||A.rows.some(r=>r.code.toUpperCase()===code&&r.status===A.status);
+    const st=A.rows.filter(r=>r.code.toUpperCase()===code&&r.status===A.status).reduce((a,r)=>a+r.qty,0);
+    const sup=itemSupply(it);
+    const pk=it.packs.map((x,j)=>`<div class="pkrow"><input data-it="${i}" data-f="psize" data-pi="${j}" type="number" min="1" step="1" inputmode="numeric" value="${esc(x.size)}" placeholder="cái/th" aria-label="Quy cách (chiếc mỗi thùng)"><span>×</span>`+
+      `<input data-it="${i}" data-f="pcount" data-pi="${j}" type="number" min="0" step="1" inputmode="numeric" value="${esc(x.count)}" placeholder="${sup.autoC[j]!=null?sup.autoC[j]:"thùng"}" title="Để trống: máy tự tính số thùng" aria-label="Số thùng">`+
+      `<button type="button" class="ic" data-pkdel="${i}" data-pi="${j}" aria-label="Xoá quy cách">✕</button></div>`).join("")+
+      `<button type="button" class="small pkadd" data-pkadd="${i}">+ quy cách</button>`;
+    return `<tr><td><input data-it="${i}" data-f="code" list="aCodes" value="${esc(it.code)}" placeholder="Mã hàng" spellcheck="false" autocapitalize="characters" class="code" aria-label="Mã hàng"></td>`+
+      `<td class="n">${!code?"–":known?fmt(st):'<span class="newtag">hàng mới · tồn 0</span>'}</td>`+
+      `<td><input data-it="${i}" data-f="qty" type="number" min="0" step="1" inputmode="numeric" value="${esc(it.qty)}" placeholder="0" class="qty" aria-label="Tổng số lượng cần chia"></td>`+
+      `<td class="pkcell">${pk}</td>`+
+      `<td class="qr">${sup.qty?(sup.overBox?`<span class="neg">Số thùng vượt tổng ${fmt(sup.overBox)} chiếc</span>`:packText(sup.sizes,sup.avail,sup.L)):"–"}<small>${p?`cần ${fmt(p.need)} · tồn ${fmt(p.stockTotal)}`:""}</small></td>`+
+      `<td><input data-it="${i}" data-f="nNV" type="number" min="0" step="1" inputmode="numeric" value="${esc(it.nNV)}" aria-label="Định mức NV chính"></td>`+
+      `<td><input data-it="${i}" data-f="nCTV" type="number" min="0" step="1" inputmode="numeric" value="${esc(it.nCTV)}" aria-label="Định mức CTV"></td>`+
+      `<td><input data-it="${i}" data-f="nHKD" type="number" min="0" step="1" inputmode="numeric" value="${esc(it.nHKD)}" aria-label="Định mức HKD"></td>`+
+      `<td><button type="button" class="ic" data-itdel="${i}" aria-label="Xoá mặt hàng">✕</button></td></tr>`;}).join("");
+}
+function itemsHtml(){
+  return `<thead><tr><th>Mã hàng</th><th class="n">Tồn hiện tại</th><th>Tổng số lượng cần chia</th><th>Đóng thùng: quy cách × số thùng</th><th>Quy ra</th><th>ĐM NV chính</th><th>ĐM CTV/VCC</th><th>ĐM đại lý HKD</th><th></th></tr></thead><tbody>${itemsRowsHtml()}</tbody>`;
+}
+const activeInItems=()=>{const a=document.activeElement;return a&&a.dataset&&a.dataset.it!=null;};
+function aRender(){
+  const has=!!A.rows.length;
+  $("aSrc").innerHTML=has?`<b>${esc(A.src)}</b>${A.reportTime?" · "+esc(A.reportTime):""} · ${A.staff.length} nhân viên`:"Chưa có file. App đọc sheet <b>Chi tiết NV</b>.";
+  $("aTplInfo").innerHTML=TPL?`<b>${esc(TPL.name)}</b> · sheet ${esc(TPL.sheet)} · ${TPL.people.length} người · ${TPL.itemCols.filter(c=>c.code).length} mặt hàng có sẵn cột`:"Có file mẫu thì app điền số vào đúng sheet <b>chot</b> của anh, giữ nguyên định dạng, công thức và các sheet khác. Không có mẫu thì app tự tạo sheet chot cùng bố cục.";
+  $("aTplDel").hidden=!TPL;
+  $("aItemsCard").hidden=!has;$("allocBar").hidden=$("tabAlloc").hidden||!has;
+  aPlans=A.items.map(it=>norm(it.code)?planItem(it):null);   // mặt hàng mới chưa có trong tồn kho vẫn chia được (tồn = 0)
+  if(has&&!activeInItems())$("aItems").innerHTML=itemsHtml();
+  const valid=aPlans.map((p,i)=>p?i:-1).filter(i=>i>=0);
+  if(!has||!valid.length){$("aResult").hidden=true;aPlan=null;return;}
+  $("aResult").hidden=false;
+  if(A.cur!=="chot"&&!valid.includes(A.cur))A.cur=valid[0];
+  $("aChips").innerHTML=valid.map(i=>{const p=aPlans[i],ok=p.D.every(d=>!d.got||d.ok)&&!p.over&&!p.overBox;
+    return `<button type="button" data-chip="${i}" aria-pressed="${A.cur===i}"><b>${esc(p.label)}</b><small>${fmt(p.got)}/${fmt(p.qty)} chiếc ${ok?"✓":"!"}</small></button>`;}).join("")+
+    `<button type="button" data-chip="chot" class="chotchip" aria-pressed="${A.cur==="chot"}"><b>Bảng chốt</b><small>tất cả mặt hàng</small></button>`;
+  $("aItemView").hidden=A.cur==="chot";$("aChotView").hidden=A.cur!=="chot";
+  if(A.cur==="chot"){renderChot();aPlan=null;return;}
+  renderItem(aPlan=aPlans[A.cur]);
+}
+function renderItem(p){
+  const S=p.sizes;
+  $("tSupply").textContent=fmt(p.qty);$("tSupplySub").textContent=packText(S,p.avail,p.L);
+  $("tNeed").textContent=fmt(p.need);$("tNeedSub").textContent=`tồn hiện tại ${fmt(p.stockTotal)}`;
+  $("tGot").textContent=fmt(p.got);$("tGotSub").textContent=`${p.D.filter(d=>d.got>0).length} huyện`;
+  const lc={};S.forEach(s=>lc[s]=Math.max(0,p.left[s]));
+  $("tLeft").textContent=fmt(p.qty-p.got);$("tLeftSub").textContent=packText(S,lc,Math.max(0,p.remL));
+  let msg,kind="ok";
+  if(!p.qty){msg=`Nhập tổng số lượng cần chia của ${p.label} ở mục 3.`;kind="warn";}
+  else if(p.overBox){msg=`Số thùng khai ở mục 3 nhiều hơn tổng số lượng ${fmt(p.overBox)} chiếc. Sửa lại số thùng hoặc tổng.`;kind="warn";}
+  else if(p.over){const o=S.filter(s=>p.left[s]<0).map(s=>`thùng ${s} vượt ${-p.left[s]}`);if(p.remL<0)o.push(`lẻ vượt ${-p.remL} chiếc`);msg=`Đã giao vượt số đang có: ${o.join(", ")}.`;kind="warn";}
+  else if(p.qty<p.need){msg=`Có ${fmt(p.qty)} chiếc, ít hơn nhu cầu ${fmt(p.need)} chiếc. Huyện xếp trên được ưu tiên.`;kind="warn";}
+  else msg=`Đủ hàng cho nhu cầu ${fmt(p.need)} chiếc.${p.qty-p.got?` Còn ${fmt(p.qty-p.got)} chiếc trong kho.`:""}`;
+  $("aStatusMsg").className="status "+kind;$("aMsg").textContent=msg;
+  $("aMtxTitle").textContent=`4 · Chia ${p.label} cho huyện`;
+  const dn=A.dNeed[p.code]||{};
+  let m=`<thead><tr><th></th><th>Huyện</th><th class="n">Tồn</th><th class="n">Nhu cầu</th>`+
+    S.map(s=>`<th class="n pk">Thùng ${s}<small class="${p.left[s]<0?"neg":""}">còn ${p.left[s]}/${p.avail[s]}</small></th>`).join("")+
+    `<th class="n pk">Lẻ<small class="${p.remL<0?"neg":""}">còn ${p.remL}/${p.L}</small></th><th class="n">Giao</th><th class="n" title="Đã chia khớp cho nhân viên">NV</th></tr></thead><tbody>`;
+  p.D.forEach((d,i)=>{const diff=d.got-d.need;
+    m+=`<tr class="${A.sel===d.h?"sel":""}" data-pick="${esc(d.h)}"><td class="ord"><button type="button" class="ic" data-up="${i}" ${i?"":"disabled"} aria-label="Lên">↑</button><button type="button" class="ic" data-down="${i}" ${i<p.D.length-1?"":"disabled"} aria-label="Xuống">↓</button></td>`+
+    `<td class="hname"><b>${esc(d.h)}</b><small>${d.people.filter(x=>x.on).length} người</small></td><td class="n">${fmt(d.stock)}</td>`+
+    `<td class="n"><input type="number" min="0" step="1" inputmode="numeric" data-need="${esc(d.h)}" value="${dn[d.h]!=null?esc(dn[d.h]):""}" placeholder="${d.auto}" class="${dn[d.h]!=null?"locked":""}" aria-label="Nhu cầu"></td>`+
+    S.map(s=>`<td class="n pk"><input type="number" min="0" step="1" inputmode="numeric" data-cell="${esc(d.h)}" data-k="${s}" value="${d.cnt[s]||0}" class="${d.eb[s]?"locked":""}" aria-label="Thùng ${s}"></td>`).join("")+
+    `<td class="n pk"><input type="number" min="0" step="1" inputmode="numeric" data-cell="${esc(d.h)}" data-k="loose" value="${d.loose}" class="${d.el?"locked":""}" aria-label="Lẻ"></td>`+
+    `<td class="n"><b>${fmt(d.got)}</b>${d.need?`<small class="${diff<0?"neg":"pos"}">${diff<0?"thiếu "+fmt(-diff):diff>0?"dư "+fmt(diff):"đủ"}</small>`:""}</td>`+
+    `<td class="n">${!d.got?"–":d.ok?'<span class="pos">✓</span>':'<span class="neg">!</span>'}</td></tr>`;});
+  m+=`<tr class="tot"><td></td><td>Tổng</td><td class="n">${fmt(p.stockTotal)}</td><td class="n">${fmt(p.need)}</td>`+
+    S.map(s=>`<td class="n">${p.avail[s]-p.left[s]}</td>`).join("")+`<td class="n">${p.L-p.remL}</td><td class="n">${fmt(p.got)}</td><td></td></tr></tbody>`;
+  $("aMatrix").innerHTML=m;
+
+  const d=p.D.find(x=>x.h===A.sel)||null;
+  $("aDetail").hidden=!d;if(!d)return;
+  const on=d.people.filter(x=>x.on),DS=d.sizes;
+  $("aDetTitle").textContent=`5 · ${d.h}: chia ${packText(DS,d.cnt,d.loose)} (${fmt(d.got)} chiếc) ${p.label}`;
+  $("aAllTo").innerHTML=`<option value="">chọn người</option>`+on.map(x=>`<option value="${esc(x.nv)}">${esc(shortName(x.nv))}</option>`).join("");
+  let ck,ckind="warn";const neg=DS.filter(s=>d.restB[s]<0),rest={};DS.forEach(s=>rest[s]=Math.max(0,d.restB[s]));
+  if(!d.got)ck="Huyện này chưa được giao hàng. Gõ số ở bảng bên trái.";
+  else if(neg.length)ck=`Chia quá số thùng huyện có: ${neg.map(s=>`thùng ${s} vượt ${-d.restB[s]}`).join(", ")}.`;
+  else if(d.looseTotal!==d.looseAvail)ck=`Cột Lẻ chưa khớp: huyện có ${fmt(d.loose)} lẻ${DS.some(s=>rest[s])?` + ${packText(DS,rest,0)} chưa giao (tháo ra chia lẻ)`:""} = ${fmt(d.looseAvail)} chiếc, cột Lẻ đang ghi ${fmt(d.looseTotal)}.`;
+  else{ck=`Khớp: chia đủ ${fmt(d.got)} chiếc.${DS.some(s=>rest[s])?` Tháo ${packText(DS,rest,0)} để chia lẻ.`:""}`;ckind="ok";}
+  $("aCheck").className="check "+ckind;$("aCheck").textContent=ck;
+  let t=`<thead><tr><th></th><th>Nhân viên</th><th class="n">Tồn</th><th class="n">Định mức</th><th class="n">Cần</th>`+
+    DS.map(s=>`<th class="n pk">Thùng ${s}<small>${d.restB[s]>=0?"còn "+d.restB[s]:"vượt "+(-d.restB[s])}/${d.cnt[s]}</small></th>`).join("")+
+    `<th class="n pk">Lẻ<small>chiếc</small></th><th class="n">Nhận</th><th class="n">Sau</th></tr></thead><tbody>`;
+  d.people.slice().sort((a,b)=>(b.on-a.on)||(b.need-a.need)||a.stock-b.stock||a.nv.localeCompare(b.nv)).forEach(x=>{const sp=splitNv(x.nv),dis=x.on?"":"disabled",cls=x.manual?"locked":"";
+    t+=`<tr class="${x.on?"":"off"}"><td><input type="checkbox" data-inc="${esc(x.nv)}" ${x.on?"checked":""} aria-label="Tham gia"></td>`+
+    `<td class="nv"><b>${esc(shortName(x.nv))}</b><small>${esc(sp.id)} · ${esc(x.group)}</small></td>`+
+    `<td class="n">${fmt(x.stock)}</td><td class="n"><input type="number" min="0" step="1" inputmode="numeric" data-pnorm="${esc(x.nv)}" value="${x.normv}" class="${(A.pNorm[p.code]||{})[x.nv]!=null?"locked":""}" aria-label="Định mức"></td>`+
+    `<td class="n">${x.need?fmt(x.need):"–"}</td>`+
+    DS.map(s=>`<td class="n pk"><input type="number" min="0" step="1" inputmode="numeric" data-pc="${esc(x.nv)}" data-k="${s}" value="${x.b[s]||0}" class="${cls}" ${dis} aria-label="Thùng ${s}"></td>`).join("")+
+    `<td class="n pk"><input type="number" min="0" step="1" inputmode="numeric" data-pc="${esc(x.nv)}" data-k="loose" value="${x.loose}" class="${cls}" ${dis} aria-label="Lẻ"></td>`+
+    `<td class="n"><b>${x.recv?fmt(x.recv):"–"}</b></td><td class="n">${fmt(x.after)}</td></tr>`;});
+  t+=`<tr class="tot"><td></td><td>Tổng</td><td class="n">${fmt(d.stock)}</td><td></td><td class="n">${fmt(on.reduce((a,x)=>a+x.need,0))}</td>`+
+    DS.map(s=>`<td class="n">${d.cnt[s]-Math.max(0,d.restB[s])} / ${d.cnt[s]}</td>`).join("")+`<td class="n">${fmt(d.looseTotal)}</td><td class="n">${fmt(d.assigned)}</td><td class="n">${fmt(d.stock+d.assigned)}</td></tr></tbody>`;
+  $("aStaff").innerHTML=t;
+}
+
+// ---------- bảng chốt ----------
+const nameKey=s=>low(s).replace(/\s+/g," ");
+function chotData(){
+  const plans=aPlans.filter(Boolean);
+  const recv={};plans.forEach(p=>p.people.forEach(x=>{if(x.recv)sub(recv,x.nv)[p.code]=x.recv;}));
+  const byId={},byName={};A.staff.forEach(s=>{const sp=splitNv(s.nv);byId[sp.id.toUpperCase()]=s.nv;if(sp.name)byName[nameKey(sp.name)]=s.nv;});
+  const rows=[],used=new Set();
+  if(TPL){TPL.people.forEach(tp=>{const nv=(tp.code&&byId[tp.code.toUpperCase()])||byName[nameKey(tp.name)]||"";if(nv)used.add(nv);
+      rows.push({tpl:tp,nv,cum:tp.cum,name:tp.name,code:tp.code||(nv?splitNv(nv).id:""),huyen:tp.huyen,q:nv?(recv[nv]||{}):{}});});}
+  else A.staff.slice().sort((a,b)=>(a.huyen||"").localeCompare(b.huyen||"")).forEach(s=>{used.add(s.nv);const sp=splitNv(s.nv);
+      rows.push({nv:s.nv,cum:s.huyen||NOH,name:shortName(s.nv),code:sp.id,huyen:s.huyen,q:recv[s.nv]||{}});});
+  const cumOf=h=>{if(!TPL||!h)return "";const t=TPL.people.find(tp=>tp.huyen&&(low(h)===low(tp.huyen)||low(h).includes(low(tp.huyen))));return t?t.cum:"";};
+  const extra=Object.keys(recv).filter(nv=>!used.has(nv)).map(nv=>{const sp=splitNv(nv),st=A.staff.find(s=>s.nv===nv),h=st?st.huyen:"";
+    const hv=TPL?((TPL.people.find(tp=>tp.huyen&&low(h).includes(low(tp.huyen)))||{}).huyen||h):h;
+    return {nv,extra:true,cum:cumOf(h)||h||NOH,name:shortName(nv),code:sp.id,huyen:hv,q:recv[nv]};});
+  return {plans,rows,extra,codes:plans.map(p=>p.code),labels:plans.map(p=>p.label)};
+}
+function renderChot(){
+  const c=chotData(),all=c.rows.concat(c.extra);
+  $("aChotInfo").textContent=TPL?`Theo thứ tự người trong file mẫu ${TPL.name}`:"Chưa có file mẫu: xếp theo huyện trong file tồn kho";
+  $("aChotWarn").hidden=!c.extra.length;
+  if(c.extra.length)$("aChotWarnMsg").textContent=`${c.extra.length} người được chia hàng nhưng không có trong sheet chot (${c.extra.map(x=>x.name).join(", ")}). App sẽ thêm họ vào cuối sheet khi xuất file.`;
+  const tot=c.codes.map(code=>all.reduce((a,r)=>a+(r.q[code]||0),0));
+  let t=`<thead><tr><th>TT</th><th>Huyện</th><th>Họ và tên</th><th>Mã kho</th>${c.labels.map(x=>`<th class="n">${esc(x)}</th>`).join("")}</tr>`+
+    `<tr class="tot"><td></td><td>Tổng</td><td></td><td></td>${tot.map(v=>`<td class="n">${fmt(v)}</td>`).join("")}</tr></thead><tbody>`;
+  all.forEach((r,i)=>{t+=`<tr class="${r.extra?"extra":""}${!r.nv&&!r.extra?" nomatch":""}"><td class="n">${i+1}</td><td>${esc(r.cum)}</td><td>${esc(r.name)}${r.extra?' <span class="grp">thêm mới</span>':!r.nv?' <span class="grp">không có trong tồn kho</span>':""}</td><td><small>${esc(r.code)}</small></td>`+
+    c.codes.map(code=>`<td class="n">${r.q[code]?fmt(r.q[code]):""}</td>`).join("")+`</tr>`;});
+  $("aChot").innerHTML=t+"</tbody>";
+}
+
+// ---------- xuất file chốt ----------
+function loadExcelJS(){
+  if(window.ExcelJS)return Promise.resolve();
+  return new Promise((res,rej)=>{const s=document.createElement("script");s.src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js";s.crossOrigin="anonymous";
+    s.onload=()=>res();s.onerror=()=>rej(new Error("Không tải được thư viện Excel. Kiểm tra mạng rồi thử lại."));document.head.appendChild(s);});
+}
+const today=()=>{const d=new Date(),p=n=>String(n).padStart(2,"0");return `${p(d.getDate())}.${p(d.getMonth()+1)}.${d.getFullYear()}`;};
+async function exportChot(){
+  const c=chotData();if(!c.plans.length)throw new Error("Chưa có mặt hàng nào để xuất.");
+  await loadExcelJS();
+  const wb=new ExcelJS.Workbook();let ws,colOf={},firstRow,lastRow;
+  if(TPL){
+    await wb.xlsx.load(unb64(TPL.b64));
+    ws=wb.getWorksheet(TPL.sheet);const hr=TPL.headerRow+1;
+    const head=ws.getRow(hr);
+    TPL.itemCols.forEach(ic=>{if(ic.code)colOf[ic.code.toUpperCase()]=ic.col+1;});
+    const free=TPL.itemCols.filter(ic=>!ic.code).map(ic=>ic.col+1);
+    c.codes.forEach((code,i)=>{if(!colOf[code]&&free.length){const col=free.shift();head.getCell(col).value=c.labels[i];colOf[code]=col;}});
+    firstRow=hr+2;lastRow=Math.max(...TPL.people.map(x=>x.row+1));
+    // xoá số cũ của các mặt hàng đang chia rồi điền số mới
+    c.codes.forEach(code=>{const col=colOf[code];if(!col)return;for(let r=firstRow;r<=lastRow;r++){const cell=ws.getRow(r).getCell(col);if(typeof cell.value!=="object"||cell.value===null)cell.value=null;}});
+    c.rows.forEach(r=>{const row=ws.getRow(r.tpl.row+1);c.codes.forEach(code=>{const col=colOf[code];if(col&&r.q[code])row.getCell(col).value=r.q[code];});});
+    // người chưa có trong sheet: thêm vào cuối, chép định dạng dòng cuối
+    let rr=lastRow;
+    c.extra.forEach(x=>{rr++;const row=ws.getRow(rr),src=ws.getRow(lastRow);
+      src.eachCell({includeEmpty:true},(cell,col)=>{const st=JSON.parse(JSON.stringify(cell.style||{}));delete st.fill;row.getCell(col).style=st;});
+      if(TPL.cIn>0){const L=colLetter(TPL.cName+4),R=colLetter(TPL.cIn);row.getCell(TPL.cIn+1).value={formula:`IF(SUM(${L}${rr}:${R}${rr})>0,"in","")`};row.getCell(TPL.cIn+2).value=x.huyen||"";}
+      row.getCell(1).value={formula:`A${rr-1}+1`};row.getCell(TPL.cName).value=x.cum;row.getCell(TPL.cName+1).value=x.name;
+      if(TPL.cCode>=0)row.getCell(TPL.cCode+1).value=x.code;
+      c.codes.forEach(code=>{const col=colOf[code];if(col&&x.q[code])row.getCell(col).value=x.q[code];});});
+    // ngày tháng ở dòng 2 nếu có ô "Ngày tháng:"
+    ws.getRow(2).eachCell((cell,col)=>{if(low(cell.value)==="ngày tháng:")ws.getRow(2).getCell(col+1).value=today();});
+  }else{
+    ws=wb.addWorksheet("chot",{views:[{state:"frozen",xSplit:3,ySplit:4}]});
+    const codes=c.codes,nCol=5+codes.length;
+    const thin={style:"thin",color:{argb:"FF000000"}},border={top:thin,left:thin,bottom:thin,right:thin};
+    const font={name:"Times New Roman",size:11};
+    ws.getCell("B1").value="PHÂN BỔ HÀNG";ws.getCell("B1").font={...font,bold:true,size:14};
+    ws.getCell("B2").value="Ngày tháng:";ws.getCell("C2").value=today();ws.getCell("B2").font=font;ws.getCell("C2").font=font;
+    const head=["TT","Huyện","Họ Và Tên","Mã kho","Số điện thoại",...c.labels,"in"];
+    ws.getRow(3).values=head;
+    ws.getRow(4).values=["","Tổng","","","",...codes.map(()=>null),""];
+    codes.forEach((x,i)=>{const L=colLetter(6+i);ws.getRow(4).getCell(6+i).value={formula:`SUBTOTAL(9,${L}5:${L}${4+c.rows.length})`};});
+    c.rows.concat(c.extra).forEach((r,i)=>{const row=ws.getRow(5+i);
+      row.values=[i+1,r.cum,r.name,r.code,"",...codes.map(code=>r.q[code]||null)];
+      row.getCell(nCol+1).value={formula:`IF(SUM(F${5+i}:${colLetter(nCol)}${5+i})>0,"in","")`};});
+    const last=4+c.rows.length+c.extra.length;
+    for(let r=3;r<=last;r++)for(let col=1;col<=nCol+1;col++){const cell=ws.getRow(r).getCell(col);cell.border=border;cell.font={...font,bold:r<=4};
+      if(r===3){cell.fill={type:"pattern",pattern:"solid",fgColor:{argb:"FFFFF2CC"}};cell.alignment={horizontal:"center",vertical:"middle",wrapText:true};}}
+    ws.getRow(3).height=30;
+    ws.columns.forEach((col,i)=>{col.width=[5,18,26,24,14][i]||12;});
+    ws.autoFilter={from:"A3",to:colLetter(nCol+1)+"3"};
+  }
+  wb.calcProperties.fullCalcOnLoad=true;
+  const buf=await wb.xlsx.writeBuffer();
+  const name=TPL?TPL.name.replace(/\.xlsx$/i,"")+`_chot_${today().replace(/\./g,"")}.xlsx`:`Chot_phan_bo_${today().replace(/\./g,"")}.xlsx`;
+  return {buf,name};
+}
+function colLetter(n){let s="";while(n>0){const m=(n-1)%26;s=String.fromCharCode(65+m)+s;n=Math.floor((n-1)/26);}return s;}
+
+// ---------- điều khiển ----------
+function aUpdateCodes(){
+  const st=A.status,cnt={};
+  A.rows.forEach(r=>{if(r.status===st)cnt[r.code]=(cnt[r.code]||0)+r.qty;});
+  $("aCodes").innerHTML=Object.keys(cnt).sort().map(c=>`<option value="${esc(c)}">${fmt(cnt[c])} chiếc đang tồn</option>`).join("");
+}
+function aFillControls(){
+  const sts=[...new Set(A.rows.map(r=>r.status))].filter(Boolean);
+  if(!sts.includes(A.status))A.status=sts.includes("Hàng mới")?"Hàng mới":(sts[0]||"");
+  $("aStatus").innerHTML=sts.map(s=>`<option>${esc(s)}</option>`).join("");$("aStatus").value=A.status;
+  if(!A.items.length)A.items.push({code:"",qty:"",packs:[{size:"",count:""}],nNV:40,nCTV:25,nHKD:10});
+  A.items.forEach(migrateItem);
+  aUpdateCodes();
+}
+const curCode=()=>aPlan?aPlan.code:"";
+const clearCode=code=>{delete A.cell[code];delete A.pcell[code];};
+function commit(){aSave();aRender();}
+$("aFile").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  $("aSrc").textContent="Đang đọc file…";
+  try{const d=parseWorkbook(await f.arrayBuffer(),f.name);Object.assign(A,d,{excluded:{},cell:{},pcell:{},sel:""});aFillControls();commit();}
+  catch(err){$("aSrc").textContent=(err&&err.message)||"Không đọc được file này.";}
+});
+$("aTpl").addEventListener("change",async e=>{
+  const f=e.target.files[0];e.target.value="";if(!f)return;
+  $("aTplInfo").textContent="Đang đọc file mẫu…";
+  try{const buf=await f.arrayBuffer();const t=parseTemplate(buf,f.name);t.b64=b64(buf);TPL=t;
+    try{localStorage.setItem(TKEY,JSON.stringify(TPL));}catch(err){}
+    // mặt hàng có sẵn cột trong file mẫu mà chưa có trong danh sách chia thì gợi ý thêm
+    aRender();}
+  catch(err){$("aTplInfo").textContent=(err&&err.message)||"Không đọc được file mẫu.";}
+});
+$("aTplDel").addEventListener("click",()=>{TPL=null;try{localStorage.removeItem(TKEY);}catch(e){}aRender();});
+$("aStatus").addEventListener("change",()=>{A.status=$("aStatus").value;A.cell={};A.pcell={};aUpdateCodes();commit();});
+$("aAddItem").addEventListener("click",()=>{const last=A.items[A.items.length-1]||{};A.items.push({code:"",qty:"",packs:[{size:"",count:""}],nNV:last.nNV??40,nCTV:last.nCTV??25,nHKD:last.nHKD??10});aSave();$("aItems").innerHTML=itemsHtml();aRender();
+  const ins=$("aItems").querySelectorAll('[data-f="code"]');ins[ins.length-1].focus();});
+$("aItems").addEventListener("change",e=>{const t=e.target,ds=t.dataset;if(ds.it==null)return;const it=A.items[+ds.it];
+  const old=norm(it.code).toUpperCase();
+  if(ds.f==="code"){const v=norm(t.value),hit=A.rows.find(r=>r.code.toUpperCase()===v.toUpperCase());it.code=hit?hit.code:v;}
+  else if(ds.f==="psize"||ds.f==="pcount"){migrateItem(it);it.packs[+ds.pi][ds.f==="psize"?"size":"count"]=t.value;}
+  else it[ds.f]=t.value;
+  clearCode(old);clearCode(norm(it.code).toUpperCase());
+  if(ds.f==="code"&&norm(it.code))A.cur=+ds.it;
+  aSave();$("aItems").innerHTML=itemsHtml();aRender();});
+$("aItems").addEventListener("click",e=>{
+  const pa=e.target.closest("[data-pkadd]"),pd=e.target.closest("[data-pkdel]");
+  if(pa||pd){const it=migrateItem(A.items[+(pa||pd).dataset[pa?"pkadd":"pkdel"]]);
+    if(pa)it.packs.push({size:"",count:""});else{it.packs.splice(+pd.dataset.pi,1);if(!it.packs.length)it.packs.push({size:"",count:""});}
+    clearCode(norm(it.code).toUpperCase());aSave();$("aItems").innerHTML=itemsHtml();aRender();
+    if(pa){const ins=$("aItems").querySelectorAll(`[data-it="${pa.dataset.pkadd}"][data-f="psize"]`);ins[ins.length-1].focus();}return;}
+  const b=e.target.closest("[data-itdel]");if(!b)return;const i=+b.dataset.itdel;clearCode(norm(A.items[i].code).toUpperCase());A.items.splice(i,1);
+  if(A.cur===i)A.cur=0;else if(typeof A.cur==="number"&&A.cur>i)A.cur--;aSave();$("aItems").innerHTML=itemsHtml();aRender();});
+$("aChips").addEventListener("click",e=>{const b=e.target.closest("[data-chip]");if(!b)return;A.cur=b.dataset.chip==="chot"?"chot":+b.dataset.chip;commit();});
+$("aReset").addEventListener("click",()=>{const c=curCode();clearCode(c);delete A.dNeed[c];delete A.pNorm[c];A.order=[];commit();});
+$("aMatrix").addEventListener("click",e=>{
+  if(!aPlan)return;
+  const b=e.target.closest("button");
+  if(b&&(b.dataset.up!=null||b.dataset.down!=null)){const ord=aPlan.D.map(d=>d.h);
+    if(b.dataset.up!=null){const i=+b.dataset.up;[ord[i-1],ord[i]]=[ord[i],ord[i-1]];}else{const i=+b.dataset.down;[ord[i+1],ord[i]]=[ord[i],ord[i+1]];}
+    A.order=ord;A.pcell={};commit();return;}
+  if(e.target.closest("input"))return;
+  const tr=e.target.closest("tr[data-pick]");if(tr){A.sel=tr.dataset.pick;commit();}
+});
+$("aMatrix").addEventListener("change",e=>{const t=e.target,ds=t.dataset,c=curCode();
+  if(ds.need!=null){if(t.value==="")delete sub(A.dNeed,c)[ds.need];else sub(A.dNeed,c)[ds.need]=int0(t.value);delete A.pcell[c];}
+  else if(ds.cell!=null){const o=sub(sub(A.cell,c),ds.cell);if(ds.k==="loose")o.loose=int0(t.value);else sub(o,"b")[ds.k]=int0(t.value);if(A.pcell[c])delete A.pcell[c][ds.cell];}
+  else return;
+  commit();});
+function setPerson(nv,patch){const c=curCode(),d=aPlan&&aPlan.D.find(x=>x.h===A.sel);if(!d)return;const p=d.people.find(x=>x.nv===nv);if(!p)return;
+  const row={b:{...p.b},loose:p.loose};if(patch.k==="loose")row.loose=patch.v;else row.b[patch.k]=patch.v;
+  sub(sub(A.pcell,c),d.h)[nv]=row;commit();}
+$("aAllTo").addEventListener("change",e=>{const nv=e.target.value;if(!nv||!aPlan)return;const c=curCode(),d=aPlan.D.find(x=>x.h===A.sel);
+  const m=sub(A.pcell,c)[d.h]={};d.people.filter(x=>x.on).forEach(x=>{m[x.nv]=x.nv===nv?{b:{...d.cnt},loose:d.loose}:{b:{},loose:0};});commit();});
+$("aAutoD").addEventListener("click",()=>{const c=curCode();if(A.pcell[c])delete A.pcell[c][A.sel];commit();});
+$("aStaff").addEventListener("change",e=>{const t=e.target,ds=t.dataset,c=curCode();
+  if(ds.pc!=null){setPerson(ds.pc,{k:ds.k,v:int0(t.value)});return;}
+  if(ds.inc!=null){if(t.checked)delete A.excluded[ds.inc];else A.excluded[ds.inc]=true;A.pcell={};}
+  else if(ds.pnorm!=null){sub(A.pNorm,c)[ds.pnorm]=int0(t.value);if(A.pcell[c])delete A.pcell[c][A.sel];}
+  else return;
+  commit();});
+const aReport=(k,m)=>{const v=!$("aChotView").hidden;const box=v?$("aChotWarn"):$("aStatusMsg"),msg=v?$("aChotWarnMsg"):$("aMsg");box.hidden=false;box.className="status "+(k||"");msg.textContent=m;};
+$("aXlBtn").addEventListener("click",async()=>{
+  try{aReport("busy","Đang tạo file chốt…");const {buf,name}=await exportChot();
+    const type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+    let file=null;try{file=new File([buf],name,{type});}catch(e){}
+    if(file&&navigator.canShare&&navigator.canShare({files:[file]})&&/iPhone|iPad|Android/i.test(navigator.userAgent)){
+      try{await navigator.share({files:[file],title:name});aReport("ok","Đã xuất file chốt.");return;}catch(e){if(e&&e.name==="AbortError"){aReport("","Đã huỷ.");return;}}}
+    const url=URL.createObjectURL(new Blob([buf],{type}));const a=document.createElement("a");a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),4000);aReport("ok",`Đã tạo file ${name}.`);}
+  catch(err){aReport("warn",(err&&err.message)||"Không tạo được file.");}
+});
+$("aCopyBtn").addEventListener("click",()=>{
+  const c=chotData();if(!c.plans.length)return;
+  const all=c.rows.concat(c.extra);
+  const tsv=[["Huyện","Họ Và Tên","Mã kho",...c.labels]].concat(all.map(r=>[r.cum,r.name,r.code,...c.codes.map(x=>r.q[x]||"")])).map(r=>r.join("\t")).join("\n");
+  try{navigator.clipboard.writeText(tsv).then(()=>aReport("ok","Đã sao chép bảng chốt. Dán vào Excel."),()=>aReport("warn","Không sao chép được, dùng nút Xuất file chốt."));}catch(e){}
+});
+aLoad();
+if(A.rows.length)aFillControls();
+aRender();
+try{if(localStorage.getItem(KEY+"-tab")==="alloc")showTab("alloc");}catch(e){}
 
 // ---------- install / offline ----------
 const standalone=window.navigator.standalone||window.matchMedia("(display-mode: standalone)").matches;

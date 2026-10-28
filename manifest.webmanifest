@@ -1,7 +1,7 @@
 {
-  "name": "Quét Serial Thùng",
-  "short_name": "Quét Thùng",
-  "description": "Quét mã QR thùng bằng camera, tách serial theo cột Thùng 1, Thùng 2… và xuất Excel.",
+  "name": "Kho Oanh Ninh Bình",
+  "short_name": "Kho Oanh",
+  "description": "Quét serial theo thùng và phân bổ hàng cho nhân viên — Thủ kho Nguyễn Thị Kim Oanh, Ninh Bình.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

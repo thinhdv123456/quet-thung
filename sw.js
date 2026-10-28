@@ -1,5 +1,5 @@
 // Offline cache. Đổi VERSION mỗi khi sửa file để máy tải bản mới.
-const VERSION = "quet-thung-v2";
+const VERSION = "kho-oanh-v5";
 const FILES = [
   "./",
   "./index.html",
@@ -10,7 +10,8 @@ const FILES = [
   "https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js",
   "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.5/dist/iife/reader/index.js",
   "https://cdn.jsdelivr.net/npm/zxing-wasm@3.1.5/dist/reader/zxing_reader.wasm",
-  "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"
+  "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js",
+  "https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"
 ];
 
 self.addEventListener("install", (e) => {
